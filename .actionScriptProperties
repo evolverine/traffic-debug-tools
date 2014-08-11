@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<actionScriptProperties analytics="false" mainApplicationPath="debugeASe.as" projectUUID="d6c1f574-ba42-4547-ae84-defac06d6046" version="11">
+<actionScriptProperties analytics="false" mainApplicationPath="TrafficDebugTools.as" projectUUID="d1c1f574-ba42-4547-ae84-defac06d6047" version="11">
   <compiler additionalCompilerArguments="-locale en_US" autoRSLOrdering="true" copyDependentFiles="false" fteInMXComponents="false" generateAccessible="false" htmlExpressInstall="true" htmlGenerate="false" htmlHistoryManagement="false" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin" removeUnusedRSL="true" sourceFolderPath="src" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="false" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
     <compilerSourcePath>
       <compilerSourcePathEntry kind="1" linkType="1" path="test"/>
@@ -16,7 +16,7 @@
     <sourceAttachmentPath/>
   </compiler>
   <applications>
-    <application path="debugeASe.as"/>
+    <application path="TrafficDebugTools.as"/>
   </applications>
   <modules/>
   <workers/>
