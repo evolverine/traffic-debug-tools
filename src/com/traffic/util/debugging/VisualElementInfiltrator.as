@@ -1,4 +1,4 @@
-package com.sohnar.traffic.util.debugging
+package com.traffic.util.debugging
 {
 	import com.adobe.cairngorm.contract.Contract;
 	

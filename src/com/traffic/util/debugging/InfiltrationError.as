@@ -1,4 +1,4 @@
-package com.sohnar.traffic.util.debugging
+package com.traffic.util.debugging
 {
 	public class InfiltrationError extends Error
 	{

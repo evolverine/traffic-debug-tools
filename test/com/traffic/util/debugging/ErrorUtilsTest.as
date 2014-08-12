@@ -1,4 +1,4 @@
-package com.sohnar.traffic.util.debugging
+package com.traffic.util.debugging
 {
 	import org.flexunit.asserts.assertEquals;
 	import org.flexunit.asserts.assertTrue;
