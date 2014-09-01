@@ -27,7 +27,7 @@ package com.traffic.util.debugging
 		private static var _streams:Array = [];
 		
 		private static var _abbreviateClassNames:Boolean = false;
-		private static var _skipClassNamesWhenIdentical:Boolean = true
+		private static var _skipClassNamesWhenIdentical:Boolean = true;
 		private static var _excludeLastItemsNo:int = 1;
 		private static var _whenToPrint:String = PRINT_ON_IDLE;
 		private static var _isDisabled:Boolean = false;
@@ -40,14 +40,21 @@ package com.traffic.util.debugging
 			_whenToPrint = whenToPrint;
 		}
 		
-		public static function debug(activity:String, stackTrace:String = "", printImmediately:Boolean = false):void
+		public static function debug(activity:String = "", stackTrace:String = "", printImmediately:Boolean = false):void
 		{
 			if(_isDisabled)
 				return;
-			
+
+            if(!stackTrace)
+                stackTrace = new Error().getStackTrace();
+
 			var previousPaths:Array = _paths.length ? _paths[_paths.length - 1] : [];
 			
 			const stackFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical, _excludeLastItemsNo);
+
+            if(!activity)
+                activity = stackFunctions[stackFunctions.length - 1];
+
 			_paths.push(stackFunctions);
 			_activityByPath[stackFunctions] = _dateFormatter.format(new Date()) + " " + activity;
 			
@@ -67,7 +74,15 @@ package com.traffic.util.debugging
 		
 		public static function debugSimilar(activity:String, stackTrace:String = "", printImmediately:Boolean = false):void
 		{
-			if(isSameStackAndActivityAsLatestActivity(activity, getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical, _excludeLastItemsNo)))
+            if(!stackTrace)
+                stackTrace = new Error().getStackTrace();
+
+            var stackTraceFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical, _excludeLastItemsNo);
+
+            if(!activity)
+                activity = stackTraceFunctions[stackTraceFunctions.length - 1];
+
+			if(isSameStackAndActivityAsLatestActivity(activity, stackTraceFunctions))
 			{
 				if(_paths.length)
 					_activityByPath[_paths[_paths.length - 1]] += "+";
@@ -221,13 +236,10 @@ package com.traffic.util.debugging
 		
 		public static function prettyPrintPath(pathElements:Array, noTabs:int = 0):String
 		{
-			const FUNCTIONS_PER_LINE:int = 5;
 			var path:String = StringUtils.repeatString("\t", noTabs);
 			
 			for(var j:int = 0; j < pathElements.length; j++)
 			{
-				if(j != 0 && j % (FUNCTIONS_PER_LINE-1) == 0)
-					path += "\n" + StringUtils.repeatString("\t", noTabs);
 				path += "[" + pathElements[j] + "]" + (j == pathElements.length - 1 ? "" : " -> ");
 			}
 			
