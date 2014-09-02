@@ -3,7 +3,7 @@ package com.traffic.util.debugging
 	import org.flexunit.asserts.assertEquals;
 	import org.flexunit.asserts.assertTrue;
 
-	public class ErrorUtilsTest
+	public class dTest
 	{
 		[Test]
 		public function test_getFunctionsFromStackTrace():void
@@ -32,7 +32,7 @@ package com.traffic.util.debugging
 				];
 			
 			//when
-			var stackFunctions:Array = ErrorUtils.getFunctionsFromStackTrace(testStack, true, true, 1);
+			var stackFunctions:Array = d.getFunctionsFromStackTrace(testStack, true, true, 1);
 			
 			//then
 			trace(stackFunctions);
@@ -67,12 +67,12 @@ package com.traffic.util.debugging
 			
 			const ACTIVITY1:String = "activity1";
 			const ACTIVITY2:String = "activity2";
-			ErrorUtils.setUp(true, true, 1, ErrorUtils.PRINT_MANUAL);
+			d.setUp(true, true, 1, d.PRINT_MANUAL);
 			
 			//when
-			ErrorUtils.debug(ACTIVITY1, testStack, false);
-			ErrorUtils.debug(ACTIVITY2, testStack, false);
-			var prettyPrint:String = ErrorUtils.getPrettyPrintedActivityStreams();
+			d.debug(ACTIVITY1, testStack, false);
+			d.debug(ACTIVITY2, testStack, false);
+			var prettyPrint:String = d.getPrettyPrintedActivityStreams();
 			var prettyPrintLines:Array = prettyPrint.split("\n");
 			
 			//then

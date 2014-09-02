@@ -21,9 +21,9 @@ package com.traffic.util.debugging
 		override AS3 function push(...rest):uint
 		{
 			if(rest.length == 1 && rest[0] is CursorBookmark)
-				ErrorUtils.debug("push: " + CursorBookmark(rest[0]).value, new Error().getStackTrace(), true);
+				d.debug("push: " + CursorBookmark(rest[0]).value, new Error().getStackTrace(), true);
 			else
-				ErrorUtils.debug("push: " + rest, new Error().getStackTrace(), true);
+				d.debug("push: " + rest, new Error().getStackTrace(), true);
 			return super.push.apply(this, rest);
 		}
 
@@ -31,7 +31,7 @@ package com.traffic.util.debugging
         {
             var poppedItem:* = super.pop();
 			if(poppedItem is CursorBookmark)
-				ErrorUtils.debug("pop: " + CursorBookmark(poppedItem).value, new Error().getStackTrace(), true);
+				d.debug("pop: " + CursorBookmark(poppedItem).value, new Error().getStackTrace(), true);
             return poppedItem;
         }
 	}
