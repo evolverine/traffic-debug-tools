@@ -61,9 +61,8 @@ package com.traffic.util.debugging
 			
 			var previousFirstFunc:String = previousPaths.length ? previousPaths[0] : "";
 			if(stackFunctions[0] != previousFirstFunc)
-			{
 				_streams.push([]);
-			}
+
 			_streams[_streams.length - 1].push(stackFunctions);
 
             if(printImmediately || _whenToPrint == PRINT_IMMEDIATELY)
@@ -248,27 +247,16 @@ package com.traffic.util.debugging
 		
 		/**
 		 * E.g.:
-		 * 
-		 * ReferenceError: Error #1069: Property mx_internal_uid not found on com.sohnar.trafficlite.vos.TimesheetEmployeeEntryVO and there is no default value.
-		 at mx.collections::HierarchicalCollectionViewCursor/findAny()[C:\Users\Developer1\workspace\RLTrafficMainApplication\src\as3\mx\collections\HierarchicalCollectionViewCursor.as:341]
-		 at mx.collections::HierarchicalCollectionViewCursor/findFirst()[C:\Users\Developer1\workspace\RLTrafficMainApplication\src\as3\mx\collections\HierarchicalCollectionViewCursor.as:370]
-		 at mx.collections::HierarchicalCollectionViewCursor/collectionChangeHandler()[C:\Users\Developer1\workspace\RLTrafficMainApplication\src\as3\mx\collections\HierarchicalCollectionViewCursor.as:1339]
-		 at flash.events::EventDispatcher/dispatchEventFunction()
-		 at flash.events::EventDispatcher/dispatchEvent()
-		 at mx.collections::HierarchicalCollectionView/internalRefresh()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/advancedgrids/src/mx/collections/HierarchicalCollectionView.as:1256]
-		 at mx.collections::HierarchicalCollectionView/refresh()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/advancedgrids/src/mx/collections/HierarchicalCollectionView.as:483]
-		 at mx.controls::AdvancedDataGridBaseEx/sortHandler()[C:\Users\Developer1\workspace\RLTrafficMainApplication\src\as3\mx\controls\AdvancedDataGridBaseEx.as:8204]
-		 at mx.controls::AdvancedDataGrid/sortHandler()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/advancedgrids/src/mx/controls/AdvancedDataGrid.as:8646]
-		 at flash.events::EventDispatcher/dispatchEventFunction()
-		 at flash.events::EventDispatcher/dispatchEvent()
-		 at mx.core::UIComponent/dispatchEvent()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/framework/src/mx/core/UIComponent.as:13413]
-		 at mx.controls::AdvancedDataGrid/headerReleaseHandler()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/advancedgrids/src/mx/controls/AdvancedDataGrid.as:8691]
-		 at flash.events::EventDispatcher/dispatchEventFunction()
-		 at flash.events::EventDispatcher/dispatchEvent()
-		 at mx.core::UIComponent/dispatchEvent()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/framework/src/mx/core/UIComponent.as:13413]
-		 at mx.controls::AdvancedDataGridBaseEx/mouseUpHandler()[C:\Users\Developer1\workspace\RLTrafficMainApplication\src\as3\mx\controls\AdvancedDataGridBaseEx.as:7325]
-		 at mx.controls::AdvancedDataGrid/mouseUpHandler()[/Users/justinmclean/Documents/ApacheFlex4.11.0/frameworks/projects/advancedgrids/src/mx/controls/AdvancedDataGrid.as:8734]
-		 * 
+         Error
+         at flashx.textLayout.container::ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:512]
+         at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
+         at flashx.textLayout.compose::StandardFlowComposer/addController()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:265]
+         at flashx.textLayout.container::TextContainerManager/http://ns.adobe.com/textLayout/internal/2008::convertToTextFlowWithComposer()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/container/TextContainerManager.as:1663]
+         at spark.components::RichEditableText/updateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/spark/src/spark/components/RichEditableText.as:2948]
+         at mx.core::UIComponent/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/core/UIComponent.as:9531]
+         at mx.managers::LayoutManager/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:744]
+         at mx.managers::LayoutManager/doPhasedInstantiation()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:809]
+         at mx.managers::LayoutManager/doPhasedInstantiationCallback()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:1188]
 		 */
 		public static function getFunctionsFromStackTrace(stackTrace:String, abbreviateClassNames:Boolean = false, avoidClassNamesWhenIdentical:Boolean = true, excludeLastItemsNo:int = 1):Array
 		{
@@ -292,30 +280,33 @@ package com.traffic.util.debugging
 				if(i >= lines.length - (excludeLastItemsNo + 1))
 					break; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 				
-				var packageAndFunction:Array = lines[i].split("::");
-				if(packageAndFunction.length == 2)
+				var functionAndFile:Array = lines[i].split("()");
+				if(functionAndFile.length == 2)
 				{
-					var classAndFunctionInfo:String = packageAndFunction[1];
-					var classAndFunction:String = classAndFunctionInfo.substring(0, classAndFunctionInfo.indexOf("()")).replace("/", ".");
-					
+                    var functionInfo:String = functionAndFile[0];
+                    var firstSlash:int = functionInfo.indexOf("/");
+
+                    var classAndPackage:String = functionInfo.substring(0, firstSlash);
+                    var classAndPackageSplit:Array = classAndPackage.split("::");
+                    var className:String = classAndPackageSplit.length == 1 ? classAndPackageSplit[0] : classAndPackageSplit[1];
+
+                    var accessorAndFunction:String = functionInfo.substring(firstSlash + 1);
+                    var accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
+                    var functionName:String = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+
 					if(abbreviateClassNames)
-					{
-						var positionOfDot:int = classAndFunction.indexOf(".");
-						classAndFunction = turnClassNameIntoAbbreviation(classAndFunction.substring(0, positionOfDot)) + classAndFunction.substr(positionOfDot);
-					}
-					
+						className = turnClassNameIntoAbbreviation(className);
+
 					if(avoidClassNamesWhenIdentical)
 					{
-						positionOfDot = classAndFunction.indexOf(".");
-						
-						var currentClass:String = classAndFunction.substring(0, positionOfDot);
+						var currentClass:String = className;
 						if(previousClass == currentClass)
-							classAndFunction = classAndFunction.substr(positionOfDot);
+							className = "";
 						
 						previousClass = currentClass;
 					}
 					
-					functions.push(classAndFunction);
+					functions.push(className + "." + functionName);
 				}
 			}
 			
