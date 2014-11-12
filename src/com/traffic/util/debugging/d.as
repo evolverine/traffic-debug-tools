@@ -3,8 +3,11 @@ package com.traffic.util.debugging
 	import com.adobe.cairngorm.contract.Contract;
 	import com.sohnar.traffic.util.StringUtils;
 	import com.sohnar.traffic.util.array.ArrayUtils;
-	
-	import flash.utils.Dictionary;
+
+    import flash.events.Event;
+    import flash.events.EventDispatcher;
+
+    import flash.utils.Dictionary;
 	
 	import mx.core.FlexGlobals;
 	import mx.core.UIComponent;
@@ -21,7 +24,7 @@ package com.traffic.util.debugging
 		public static const PRINT_MANUAL:String = "printWhenUserRequestsIt";
 		
 		private static const _dateFormatter:DateFormatter = new DateFormatter("NN:SS.QQQ");
-		
+		private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
 		private static var _paths:Array = [];
 		private static var _activityByPath:Dictionary = new Dictionary(false);
 		private static var _streams:Array = [];
@@ -318,5 +321,20 @@ package com.traffic.util.debugging
 		{
 			return className.replace(/[a-z_]/g, "");
 		}
+
+        public static function dispatchEvent(event:Event):void
+        {
+            _eventDispatcher.dispatchEvent(event);
+        }
+
+        public static function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void
+        {
+            _eventDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
+        }
+
+        public static function removeEventListener(type:String, listener:Function, useCapture:Boolean = false):void
+        {
+            _eventDispatcher.removeEventListener(type, listener, useCapture);
+        }
 	}
 }
