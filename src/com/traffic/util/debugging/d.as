@@ -1,6 +1,8 @@
 package com.traffic.util.debugging
 {
-	import com.adobe.cairngorm.contract.Contract;
+    import avmplus.getQualifiedClassName;
+
+    import com.adobe.cairngorm.contract.Contract;
 	import com.sohnar.traffic.util.StringUtils;
 	import com.sohnar.traffic.util.array.ArrayUtils;
 
@@ -22,19 +24,23 @@ package com.traffic.util.debugging
 		public static const PRINT_IMMEDIATELY:String = "printImmediately";
 		public static const PRINT_ON_IDLE:String = "printOnIdle";
 		public static const PRINT_MANUAL:String = "printWhenUserRequestsIt";
-		
+
+        private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
+
+        private static const _allInstances:Array = [];
+        private static const _instancesCounter:Array = [];
+
 		private static const _dateFormatter:DateFormatter = new DateFormatter("NN:SS.QQQ");
-		private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
-		private static var _paths:Array = [];
-		private static var _activityByPath:Dictionary = new Dictionary(false);
-		private static var _streams:Array = [];
-		
-		private static var _abbreviateClassNames:Boolean = false;
-		private static var _skipClassNamesWhenIdentical:Boolean = true;
-		private static var _excludeLastItemsNo:int = 1;
-		private static var _whenToPrint:String = PRINT_ON_IDLE;
-		private static var _isDisabled:Boolean = false;
-		
+        private static var _paths:Array = [];
+
+        private static var _activityByPath:Dictionary = new Dictionary(false);
+        private static var _streams:Array = [];
+        private static var _abbreviateClassNames:Boolean = false;
+        private static var _skipClassNamesWhenIdentical:Boolean = true;
+        private static var _excludeLastItemsNo:int = 1;
+        private static var _whenToPrint:String = PRINT_ON_IDLE;
+        private static var _isDisabled:Boolean = false;
+
 		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, excludeLastItemsNo:int = 1, whenToPrint:String = PRINT_ON_IDLE):void
 		{
 			_abbreviateClassNames = abbreviateClassNames;
@@ -335,6 +341,40 @@ package com.traffic.util.debugging
         public static function removeEventListener(type:String, listener:Function, useCapture:Boolean = false):void
         {
             _eventDispatcher.removeEventListener(type, listener, useCapture);
+        }
+
+        public static function trackNewInstance(instance:Object, log:Boolean = false):String
+        {
+            var className:String = instance ? getQualifiedClassName(instance) : "Null";
+
+            if(!_allInstances[className])
+                trackNewClass(className);
+
+            var instancesOfThisClass:Dictionary = _allInstances[className];
+            if(!instancesOfThisClass[instance])
+            {
+                var classComponents:Array = className.split("::");
+                instancesOfThisClass[instance] = classComponents[classComponents.length - 1] + _instancesCounter[className]++;
+
+                if(log)
+                    debug("New instance tracked as " + instancesOfThisClass[instance]);
+            }
+
+            return className;
+        }
+
+        public static function getId(instance:Object):String
+        {
+            if(!instance)
+                return "Unknown";
+
+            return _allInstances[trackNewInstance(instance)][instance];
+        }
+
+        private static function trackNewClass(className:String):void
+        {
+            _allInstances[className] = new Dictionary(false);
+            _instancesCounter[className] = 0;
         }
 	}
 }
