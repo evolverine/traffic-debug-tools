@@ -263,6 +263,7 @@ package com.traffic.util.debugging
          at flashx.textLayout.container::TextContainerManager/http://ns.adobe.com/textLayout/internal/2008::convertToTextFlowWithComposer()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/container/TextContainerManager.as:1663]
          at spark.components::RichEditableText/updateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/spark/src/spark/components/RichEditableText.as:2948]
          at mx.core::UIComponent/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/core/UIComponent.as:9531]
+         at DeleteTextMemento()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/edit/ModelEdit.as:255]
          at mx.managers::LayoutManager/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:744]
          at mx.managers::LayoutManager/doPhasedInstantiation()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:809]
          at mx.managers::LayoutManager/doPhasedInstantiationCallback()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:1188]
@@ -289,34 +290,33 @@ package com.traffic.util.debugging
 				if(i >= lines.length - (excludeLastItemsNo + 1))
 					break; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 				
-				var functionAndFile:Array = lines[i].split("()");
-				if(functionAndFile.length == 2)
-				{
-                    var functionInfo:String = functionAndFile[0];
-                    var firstSlash:int = functionInfo.indexOf("/");
+				var functionAndDebugInfo:Array = lines[i].split("()");
+                var packageClassAccessorFunction:String = functionAndDebugInfo[0];
 
-                    var classAndPackage:String = functionInfo.substring(0, firstSlash);
-                    var classAndPackageSplit:Array = classAndPackage.split("::");
-                    var className:String = classAndPackageSplit.length == 1 ? classAndPackageSplit[0] : classAndPackageSplit[1];
+                var firstSlash:int = packageClassAccessorFunction.indexOf("/");
+                var constructor:Boolean = firstSlash == -1;
+                var classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
+                var classAndPackageSplit:Array = classAndPackage.split("::");
+                var defaultPackage:Boolean = classAndPackageSplit.length == 1;
+                var className:String = defaultPackage ? classAndPackageSplit[0].substr(classAndPackageSplit[0].indexOf("at ") + 3) : classAndPackageSplit[1];
 
-                    var accessorAndFunction:String = functionInfo.substring(firstSlash + 1);
-                    var accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
-                    var functionName:String = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+                var accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
+                var accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
+                var functionName:String = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
 
-					if(abbreviateClassNames)
-						className = turnClassNameIntoAbbreviation(className);
+                if(abbreviateClassNames)
+                    className = turnClassNameIntoAbbreviation(className);
 
-					if(avoidClassNamesWhenIdentical)
-					{
-						var currentClass:String = className;
-						if(previousClass == currentClass)
-							className = "";
-						
-						previousClass = currentClass;
-					}
-					
-					functions.push(className + "." + functionName);
-				}
+                if(avoidClassNamesWhenIdentical)
+                {
+                    var currentClass:String = className;
+                    if(previousClass == currentClass)
+                        className = "";
+
+                    previousClass = currentClass;
+                }
+
+                functions.push(className + "." + functionName);
 			}
 			
 			Contract.postcondition(functions != null);
