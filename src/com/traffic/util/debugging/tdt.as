@@ -19,7 +19,7 @@ package com.traffic.util.debugging
 	import mx.utils.StringUtil;
 	
 
-	public class d
+	public class tdt
 	{
 		public static const PRINT_IMMEDIATELY:String = "printImmediately";
 		public static const PRINT_ON_IDLE:String = "printOnIdle";
