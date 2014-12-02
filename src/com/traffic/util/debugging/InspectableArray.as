@@ -20,18 +20,14 @@ package com.traffic.util.debugging
 		
 		override AS3 function push(...rest):uint
 		{
-			if(rest.length == 1 && rest[0] is CursorBookmark)
-				tdt.debug("push: " + CursorBookmark(rest[0]).value, "", true);
-			else
-				tdt.debug("push: " + rest, "", true);
+			tdt.debug("push: " + rest, "", true);
 			return super.push.apply(this, rest);
 		}
 
         override AS3 function pop():*
         {
             var poppedItem:* = super.pop();
-			if(poppedItem is CursorBookmark)
-				tdt.debug("pop: " + CursorBookmark(poppedItem).value, "", true);
+			tdt.debug("pop: " + tdt.getId(poppedItem), "", true);
             return poppedItem;
         }
 	}

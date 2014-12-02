@@ -1,12 +1,17 @@
 package com.traffic.util.debugging
 {
-	import org.flexunit.asserts.assertEquals;
-	import org.flexunit.asserts.assertTrue;
+    import flash.events.Event;
+
+    import org.flexunit.assertThat;
+
+    import org.flexunit.asserts.assertEquals;
+    import org.flexunit.asserts.assertFalse;
+    import org.flexunit.asserts.assertTrue;
 
 	public class tdtTest
 	{
 		[Test]
-		public function test_getFunctionsFromStackTrace():void
+		public function test_getFunctionsFromStackTrace_with_simple_stack_trace():void
 		{
 			//given
 			const testStack:String = ( <![CDATA[
@@ -28,18 +33,97 @@ package com.traffic.util.debugging
                 "ED.dispatchEvent",
                 ".dispatchEventFunction",
                 "HCVC.collectionChangeHandler",
-                ".findFirst",
+                ".findFirst"
 				];
 			
 			//when
 			var stackFunctions:Array = tdt.getFunctionsFromStackTrace(testStack, true, true, 1);
 			
 			//then
-			trace(stackFunctions);
 			assertTrue(arraysEqual(stackFunctions, expected));
 		}
+
+        [Test]
+        public function test_getFunctionsFromStackTrace_with_complex_stack_trace():void
+        {
+            //given
+            const testUnrealisticButComplexStack:String = ( <![CDATA[
+            Error
+            at flashx.textLayout.container::ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:512]
+            at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
+            at flashx.textLayout.compose::StandardFlowComposer/addController()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:265]
+            at flashx.textLayout.container::TextContainerManager/http://ns.adobe.com/textLayout/internal/2008::convertToTextFlowWithComposer()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/container/TextContainerManager.as:1663]
+            at spark.components::RichEditableText/updateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/spark/src/spark/components/RichEditableText.as:2948]
+            at mx.core::UIComponent/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/core/UIComponent.as:9531]
+            at DeleteTextMemento()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/edit/ModelEdit.as:255]
+            at mx.managers::LayoutManager/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:744]
+            at mx.managers::LayoutManager/doPhasedInstantiation()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:809]
+            at mx.managers::LayoutManager/doPhasedInstantiationCallback()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:1188]
+        ]]> ).toString();
+
+            const expected:Array = [
+                "LM.doPhasedInstantiationCallback",
+                ".doPhasedInstantiation",
+                ".validateDisplayList",
+                "DTM.()",
+                "UIC.validateDisplayList",
+                "RET.updateDisplayList",
+                "TCM.convertToTextFlowWithComposer",
+                "SFC.addController",
+                ".attachAllContainers",
+                "CC.setRootElement"
+            ];
+
+            //when
+            var stackFunctions:Array = tdt.getFunctionsFromStackTrace(testUnrealisticButComplexStack, true, true, 0);
+
+            //then
+            assertTrue(arraysEqual(stackFunctions, expected));
+        }
+
+        [Test]
+        public function test_unique_instance_tracking():void
+        {
+            //given
+            const obj1:Object = {};
+            const obj2:Object = {};
+
+            //when
+            var idObj1:String = tdt.getId(obj1);
+            var idObj2:String = tdt.getId(obj2);
+
+            //then
+            assertFalse(idObj1 == idObj2);
+            assertEquals(idObj1, tdt.getId(obj1));
+        }
+
+        [Test]
+        public function test_event_dispatching():void
+        {
+            //given
+            var eventDispatched:Boolean = false;
+
+            const eventListener:Function = function(event:Event):void {
+                eventDispatched = true;
+            };
+
+            //when
+            tdt.addEventListener(Event.ACTIVATE, eventListener);
+            tdt.dispatchEvent(new Event(Event.ACTIVATE));
+
+            //then
+            assertThat(eventDispatched);
+
+            //when 2
+            eventDispatched = false;
+            tdt.removeEventListener(Event.ACTIVATE, eventListener);
+            tdt.dispatchEvent(new Event(Event.ACTIVATE));
+
+            //then 2
+            assertFalse(eventDispatched);
+        }
 		
-		private function arraysEqual(a1:Array, a2:Array):Boolean
+		private static function arraysEqual(a1:Array, a2:Array):Boolean
 		{
 			if (a1.length != a2.length) 
 				return false;
