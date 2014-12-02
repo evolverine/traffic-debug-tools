@@ -62,7 +62,7 @@ package com.traffic.util.debugging
 			const stackFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical, _excludeLastItemsNo);
 
             if(!activity)
-                activity = stackFunctions[stackFunctions.length - 1];
+                activity = stackFunctions[stackFunctions.length - 1] + "()";
 
 			_paths.push(stackFunctions);
 			_activityByPath[stackFunctions] = _dateFormatter.format(new Date()) + " " + activity;
@@ -354,7 +354,7 @@ package com.traffic.util.debugging
             if(!instancesOfThisClass[instance])
             {
                 var classComponents:Array = className.split("::");
-                instancesOfThisClass[instance] = classComponents[classComponents.length - 1] + _instancesCounter[className]++;
+                instancesOfThisClass[instance] = classComponents[classComponents.length - 1] + "-" + _instancesCounter[className]++;
 
                 if(log)
                     debug("New instance tracked as " + instancesOfThisClass[instance]);
