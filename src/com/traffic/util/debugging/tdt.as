@@ -3,8 +3,6 @@ package com.traffic.util.debugging
     import avmplus.getQualifiedClassName;
 
     import com.adobe.cairngorm.contract.Contract;
-	import com.sohnar.traffic.util.StringUtils;
-	import com.sohnar.traffic.util.array.ArrayUtils;
 
     import flash.events.Event;
     import flash.events.EventDispatcher;
