@@ -9,14 +9,16 @@ Here are the problems which traffic-debug-tools aims to solve when debugging app
 * The trace overload you get when tracing during unexpectedly frequent events, which then obscures the traces you care about.
 
 ### Basic tracing
-First Header | Second Header
------------- | -------------
-`tdt.debug("hello, world");` | `==================================
+```javascript
+tdt.debug("hello, world");
+```
+will output the following (once the application is idle)
+```
+==================================
 [Main.___Main_Button1_click] -> [.sayHello_clickHandler]
 ==================================
 	49:54.979 hello, world
-`
-
+```
 The part inside the equal signs is the stack trace, and beneath it there's the trace, including a timestamp.
 ### Avoiding trace duplication for recurring events
 ```javascript
