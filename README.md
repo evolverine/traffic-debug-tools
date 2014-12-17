@@ -11,15 +11,11 @@ Here are the problems which traffic-debug-tools aims to solve when debugging app
 ### Basic tracing
 First Header | Second Header
 ------------ | -------------
-```javascript
-tdt.debug("hello, world");
-``` |
-```
-==================================
+`tdt.debug("hello, world");` | `==================================
 [Main.___Main_Button1_click] -> [.sayHello_clickHandler]
 ==================================
 	49:54.979 hello, world
-```
+`
 
 The part inside the equal signs is the stack trace, and beneath it there's the trace, including a timestamp.
 ### Avoiding trace duplication for recurring events
