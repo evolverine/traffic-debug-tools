@@ -11,13 +11,15 @@ Here are the problems which traffic-debug-tools aims to solve when debugging app
 ### Basic tracing
 ```javascript
 tdt.debug("hello, world");
+tdt.debug("anyone home?");
 ```
 will output the following (once the application is idle)
 ```
 ==================================
-[Main.___Main_Button1_click] -> [.sayHello_clickHandler]
+[LayoutManager.doPhasedInstantiationCallback] -> [.doPhasedInstantiation] -> [UIComponent.set initialized] -> [.dispatchEvent] -> [EventDispatcher.dispatchEvent] -> [.dispatchEventFunction] -> [Test.___Test_WindowedApplication1_creationComplete] -> [.creationCompleteHandler]
 ==================================
-	49:54.979 hello, world
+	07:59.789 hello world!
+	07:59.797 anyone home?
 ```
 The part inside the equal signs is the stack trace, and beneath it there's the trace, including a timestamp.
 ### Avoiding trace duplication for recurring events
@@ -33,7 +35,7 @@ private function onTimer(event:TimerEvent):void
     tdt.debugSimilar("timer!")
 }
 ```
-will output the following
+will output
 ```
 ==================================
 [Main.___Main_Button1_click] -> [.startTimer_clickHandler]
@@ -44,4 +46,12 @@ will output the following
 ==================================
 	02:20.338 timer!++++
 ```
-The four + signs indicate that the same trace occurred 4 extra times.
+The four + signs indicate that the same trace occurred four extra times (i.e. five times in total).
+### Tracing easy-to-read stack trace
+```javascript
+trace("where am I: " + tdt.whereAmI());
+```
+will output
+```
+where am I: LayoutManager.doPhasedInstantiationCallback -> .doPhasedInstantiation -> UIComponent.set initialized -> .dispatchEvent -> EventDispatcher.dispatchEvent -> .dispatchEventFunction -> Test.___Test_WindowedApplication1_creationComplete -> .creationCompleteHandler
+```
