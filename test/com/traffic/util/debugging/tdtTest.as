@@ -2,10 +2,13 @@ package com.traffic.util.debugging
 {
     import flash.events.Event;
 
+    import mx.logging.Log;
+
     import org.flexunit.assertThat;
 
     import org.flexunit.asserts.assertEquals;
     import org.flexunit.asserts.assertFalse;
+    import org.flexunit.asserts.assertNotNull;
     import org.flexunit.asserts.assertTrue;
 
 	public class tdtTest
@@ -121,6 +124,47 @@ package com.traffic.util.debugging
 
             //then 2
             assertFalse(eventDispatched);
+        }
+
+        [Test]
+        public function test_log_output_includes_activity():void
+        {
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+            const activity:String = "hello world!";
+
+            //when
+            tdt.setUp(false, true, tdt.PRINT_IMMEDIATELY);
+            tdt.debug(activity);
+
+            //then
+            assertThat(logTarget.log.indexOf(activity) != -1);
+        }
+
+        [Test]
+        public function test_log_output_includes_stack_functions_in_correct_order():void
+        {
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+            const activity:String = "hello world!";
+
+            var stackFunctions:Array = tdt.getFunctionsFromStackTrace(new Error().getStackTrace(), false, true, 0);
+
+            //when
+            tdt.setUp(false, true, tdt.PRINT_IMMEDIATELY);
+            tdt.debug(activity);
+
+            //then
+            var logCopy:String = logTarget.log;
+            for(var i:int = 0; i < stackFunctions.length; i++)
+            {
+                var stackFunction:String = stackFunctions[i];
+                var positionOfFunctionInTrace:int = logCopy.indexOf(stackFunction);
+                assertThat(positionOfFunctionInTrace != -1);
+                logCopy = logCopy.substr(positionOfFunctionInTrace + stackFunction.length);
+            }
         }
 		
 		private static function arraysEqual(a1:Array, a2:Array):Boolean

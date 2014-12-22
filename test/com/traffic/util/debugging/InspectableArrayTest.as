@@ -1,4 +1,8 @@
 package com.traffic.util.debugging {
+    import mx.logging.Log;
+
+    import org.flexunit.assertThat;
+
     import org.flexunit.asserts.assertEquals;
 
     public class InspectableArrayTest {
@@ -40,18 +44,36 @@ package com.traffic.util.debugging {
         }
 
 
-        [Ignore]
         [Test]
-        public function test_push_traces_pushed_objects():void
+        public function test_push_traces_pushed_object_immediately():void
         {
-            //will be able to implement this once ticket #8 is done
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+            const pushedString:String = "pushedString";
+
+            //when
+            _sut.push(pushedString);
+
+            //then
+            assertThat(logTarget.log.indexOf(pushedString) != -1);
         }
 
-        [Ignore]
         [Test]
-        public function test_pop_traces_popped_object():void
+        public function test_pop_traces_popped_object_immediately():void
         {
-            //will be able to implement this once ticket #8 is done
+            //given
+            const pushedString:String = "pushedString";
+            _sut.push(pushedString);
+
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            //when
+            _sut.pop();
+
+            //then
+            assertThat(logTarget.log.indexOf(pushedString) != -1);
         }
     }
 }

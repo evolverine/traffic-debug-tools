@@ -27,7 +27,7 @@ package com.traffic.util.debugging
         override AS3 function pop():*
         {
             var poppedItem:* = super.pop();
-			tdt.debug("pop: " + tdt.getId(poppedItem), "", true);
+			tdt.debug("pop: " + poppedItem, "", true);
             return poppedItem;
         }
 	}
