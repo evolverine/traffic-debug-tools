@@ -53,5 +53,5 @@ trace("where am I: " + tdt.whereAmI());
 ```
 will output
 ```
-where am I: LayoutManager.doPhasedInstantiationCallback -> .doPhasedInstantiation -> UIComponent.set initialized -> .dispatchEvent -> EventDispatcher.dispatchEvent -> .dispatchEventFunction -> Test.___Test_WindowedApplication1_creationComplete -> .creationCompleteHandler
+where am I: [LayoutManager.doPhasedInstantiationCallback] -> [.doPhasedInstantiation] -> [UIComponent.set initialized] -> [.dispatchEvent] -> [EventDispatcher.dispatchEvent] -> [.dispatchEventFunction] -> [Test.___Test_WindowedApplication1_creationComplete] -> [.creationCompleteHandler]
 ```

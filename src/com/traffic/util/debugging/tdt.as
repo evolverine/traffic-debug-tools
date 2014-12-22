@@ -240,13 +240,13 @@ package com.traffic.util.debugging
 			return commonPath;
 		}
 		
-		public static function prettyPrintPath(pathElements:Array, noTabs:int = 0):String
+		public static function prettyPrintPath(pathElements:Array, noTabs:int = 0, separator:String = " -> "):String
 		{
 			var path:String = StringUtils.repeatString("\t", noTabs);
 			
 			for(var j:int = 0; j < pathElements.length; j++)
 			{
-				path += "[" + pathElements[j] + "]" + (j == pathElements.length - 1 ? "" : " -> ");
+				path += "[" + pathElements[j] + "]" + (j == pathElements.length - 1 ? "" : separator);
 			}
 			
 			return path;
@@ -323,7 +323,7 @@ package com.traffic.util.debugging
 
 		public static function whereAmI(separator:String = " -> "):String
 		{
-			return getFunctionsFromStackTrace(new Error().getStackTrace(), _abbreviateClassNames, _skipClassNamesWhenIdentical, 1).join(separator);
+			return prettyPrintPath(getFunctionsFromStackTrace(new Error().getStackTrace(), _abbreviateClassNames, _skipClassNamesWhenIdentical, 1), 0, separator);
 		}
 
 
