@@ -13,6 +13,11 @@ package com.traffic.util.debugging
 	import mx.core.UIComponent;
 	import mx.events.FlexEvent;
 	import mx.formatters.DateFormatter;
+	import mx.logging.ILogger;
+	import mx.logging.ILoggingTarget;
+	import mx.logging.Log;
+	import mx.logging.targets.LineFormattedTarget;
+	import mx.logging.targets.TraceTarget;
 	import mx.managers.ISystemManager;
 	import mx.utils.StringUtil;
 	
@@ -24,29 +29,32 @@ package com.traffic.util.debugging
 		public static const PRINT_MANUAL:String = "printWhenUserRequestsIt";
 
         private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
+		private static const _allInstances:Array = [];
 
-        private static const _allInstances:Array = [];
         private static const _instancesCounter:Array = [];
-
 		private static const _dateFormatter:DateFormatter = new DateFormatter("NN:SS.QQQ");
+
         private static var _paths:Array = [];
+		private static var _activityByPath:Dictionary = new Dictionary(false);
+		private static var _streams:Array = [];
+		private static var _abbreviateClassNames:Boolean = false;
+		private static var _skipClassNamesWhenIdentical:Boolean = true;
+		private static var _whenToPrint:String = PRINT_ON_IDLE;
+		private static var _isDisabled:Boolean = false;
+		private static var _logger:ILogger;
 
-        private static var _activityByPath:Dictionary = new Dictionary(false);
-        private static var _streams:Array = [];
-        private static var _abbreviateClassNames:Boolean = false;
-        private static var _skipClassNamesWhenIdentical:Boolean = true;
-        private static var _excludeLastItemsNo:int = 1;
-        private static var _whenToPrint:String = PRINT_ON_IDLE;
-        private static var _isDisabled:Boolean = false;
+		{
+			_logger = Log.getLogger("traffic-debug-tools");
+			Log.addTarget(new TraceTarget());
+		}
 
-		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, excludeLastItemsNo:int = 1, whenToPrint:String = PRINT_ON_IDLE):void
+		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, whenToPrint:String = PRINT_ON_IDLE):void
 		{
 			_abbreviateClassNames = abbreviateClassNames;
 			_skipClassNamesWhenIdentical = skipClassNamesWhenIdentical;
-			_excludeLastItemsNo = excludeLastItemsNo;
 			_whenToPrint = whenToPrint;
 		}
-		
+
 		public static function debug(activity:String = "", stackTrace:String = "", printImmediately:Boolean = false):void
 		{
 			if(_isDisabled)
@@ -57,7 +65,7 @@ package com.traffic.util.debugging
 
 			var previousPaths:Array = _paths.length ? _paths[_paths.length - 1] : [];
 			
-			const stackFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical, _excludeLastItemsNo);
+			const stackFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical);
 
             if(!activity)
                 activity = stackFunctions[stackFunctions.length - 1] + "()";
@@ -83,7 +91,7 @@ package com.traffic.util.debugging
             if(!stackTrace)
                 stackTrace = new Error().getStackTrace();
 
-            var stackTraceFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical, _excludeLastItemsNo);
+            var stackTraceFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical);
 
             if(!activity)
                 activity = stackTraceFunctions[stackTraceFunctions.length - 1];
@@ -163,7 +171,7 @@ package com.traffic.util.debugging
 		
 		public static function printActivityStreams(thenClearActivities:Boolean = true):void
 		{
-			trace(getPrettyPrintedActivityStreams());
+			_logger.debug(getPrettyPrintedActivityStreams());
 			
 			if(thenClearActivities)
 				clearActivities();

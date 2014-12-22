@@ -18,8 +18,8 @@ will output the following (once the application is idle)
 ==================================
 [LayoutManager.doPhasedInstantiationCallback] -> [.doPhasedInstantiation] -> [UIComponent.set initialized] -> [.dispatchEvent] -> [EventDispatcher.dispatchEvent] -> [.dispatchEventFunction] -> [Test.___Test_WindowedApplication1_creationComplete] -> [.creationCompleteHandler]
 ==================================
-	07:59.789 hello world!
-	07:59.797 anyone home?
+	01:02.827 hello world!
+	01:02.842 ...anyone home?
 ```
 The part inside the equal signs is the stack trace, and beneath it there's the trace, including a timestamp.
 ### Avoiding trace duplication for recurring events
