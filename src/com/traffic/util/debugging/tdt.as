@@ -320,7 +320,13 @@ package com.traffic.util.debugging
 			Contract.postcondition(functions != null);
 			return functions;
 		}
-		
+
+		public static function whereAmI(separator:String = " -> "):String
+		{
+			return getFunctionsFromStackTrace(new Error().getStackTrace(), _abbreviateClassNames, _skipClassNamesWhenIdentical, 1).join(separator);
+		}
+
+
 		public static function turnClassNameIntoAbbreviation(className:String):String
 		{
 			return className.replace(/[a-z_]/g, "");
