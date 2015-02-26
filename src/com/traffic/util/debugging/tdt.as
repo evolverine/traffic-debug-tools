@@ -86,7 +86,7 @@ package com.traffic.util.debugging
 				addIdleListeners();
 		}
 		
-		public static function debugSimilar(activity:String, stackTrace:String = "", printImmediately:Boolean = false):void
+		public static function debugSimilar(activity:String = "", stackTrace:String = "", printImmediately:Boolean = false):void
 		{
             if(!stackTrace)
                 stackTrace = new Error().getStackTrace();
@@ -162,7 +162,7 @@ package com.traffic.util.debugging
 			return app ? app.systemManager : null;
 		}
 		
-		public static function clearActivities():void
+		private static function clearActivities():void
 		{
 			_paths = [];
 			_streams = [];
@@ -287,13 +287,13 @@ package com.traffic.util.debugging
 				if(!StringUtil.trim(lines[lines.length - 1]))
 					lines.pop();
 			}
-			
+
+            //remove error info. E.g. "ReferenceError: Error #1069: Property mx_internal_uid not found on ... and there is no default value."
+            lines.pop();
+
 			for (var i:int = 0; i < lines.length; i++)
 			{
-				if(i == lines.length - 1) //last line is not a function
-					continue;
-				
-				if(i >= lines.length - (excludeLastItemsNo + 1))
+				if(i >= lines.length - excludeLastItemsNo)
 					break; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 				
 				var functionAndDebugInfo:Array = lines[i].split("()");
@@ -345,14 +345,14 @@ package com.traffic.util.debugging
             _eventDispatcher.dispatchEvent(event);
         }
 
-        public static function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void
+        public static function addEventListener(listenerType:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void
         {
-            _eventDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
+            _eventDispatcher.addEventListener(listenerType, listener, useCapture, priority, useWeakReference);
         }
 
-        public static function removeEventListener(type:String, listener:Function, useCapture:Boolean = false):void
+        public static function removeEventListener(listenerType:String, listener:Function, useCapture:Boolean = false):void
         {
-            _eventDispatcher.removeEventListener(type, listener, useCapture);
+            _eventDispatcher.removeEventListener(listenerType, listener, useCapture);
         }
 
         public static function trackNewInstance(instance:Object, log:Boolean = false):String
