@@ -3,26 +3,23 @@ package com.traffic.util.debugging
     import avmplus.getQualifiedClassName;
 
     import com.adobe.cairngorm.contract.Contract;
+    import com.traffic.util.trace.Tracer;
 
     import flash.events.Event;
     import flash.events.EventDispatcher;
-
     import flash.utils.Dictionary;
-	
-	import mx.core.FlexGlobals;
-	import mx.core.UIComponent;
-	import mx.events.FlexEvent;
-	import mx.formatters.DateFormatter;
-	import mx.logging.ILogger;
-	import mx.logging.ILoggingTarget;
-	import mx.logging.Log;
-	import mx.logging.targets.LineFormattedTarget;
-	import mx.logging.targets.TraceTarget;
-	import mx.managers.ISystemManager;
-	import mx.utils.StringUtil;
-	
 
-	public class tdt
+    import mx.core.FlexGlobals;
+    import mx.core.UIComponent;
+    import mx.events.FlexEvent;
+    import mx.formatters.DateFormatter;
+    import mx.logging.ILogger;
+    import mx.logging.Log;
+    import mx.logging.targets.TraceTarget;
+    import mx.managers.ISystemManager;
+    import mx.utils.StringUtil;
+
+    public class tdt
 	{
 		public static const PRINT_IMMEDIATELY:String = "printImmediately";
 		public static const PRINT_ON_IDLE:String = "printOnIdle";
@@ -353,6 +350,19 @@ package com.traffic.util.debugging
         public static function removeEventListener(listenerType:String, listener:Function, useCapture:Boolean = false):void
         {
             _eventDispatcher.removeEventListener(listenerType, listener, useCapture);
+        }
+
+        public static function printObject(object:Object):String
+        {
+            return new Tracer(object).trace();
+        }
+
+        /**
+         * Note that the tracer class needs to implement IObjectTracer.
+         * */
+        public static function registerNewObjectTracer(classOfTracedObject:Class, tracer:Class):void
+        {
+            new Tracer(null).register(getQualifiedClassName(classOfTracedObject), tracer);
         }
 
         public static function trackNewInstance(instance:Object, log:Boolean = false):String
