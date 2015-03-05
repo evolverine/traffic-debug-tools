@@ -9,25 +9,23 @@ package com.traffic.util.trace {
     import mx.logging.Log;
     import mx.logging.targets.TraceTarget;
 
-    public class Tracer {
-        private var _target:Object;
+    public class Tracer implements IObjectTracer {
         private var _tracerCache:ObjectTracerCache;
 
-        public function Tracer(objectToTrace:Object)
+        public function Tracer(tracerCache:ObjectTracerCache)
         {
-            _target = objectToTrace;
-            _tracerCache = new ObjectTracerCache();
+            _tracerCache = tracerCache;
         }
 
-        public function trace():String
+        public function trace(what:Object):String
         {
-            return _tracerCache.getTracer(getQualifiedClassName(_target)).trace(_target);
+            return _tracerCache.getTracer(getQualifiedClassName(what)).trace(what);
         }
 
-        public function register(classNameOfTracedObject:String, tracer:Class):void
+        public function register(classOfTracedObject:Class, tracer:Class):void
         {
-            if(classNameOfTracedObject && tracer)
-                _tracerCache.registerTracer(classNameOfTracedObject, tracer);
+            if(classOfTracedObject && tracer)
+                _tracerCache.registerTracer(getQualifiedClassName(classOfTracedObject), tracer);
         }
     }
 }

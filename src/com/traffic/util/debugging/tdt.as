@@ -3,6 +3,7 @@ package com.traffic.util.debugging
     import avmplus.getQualifiedClassName;
 
     import com.adobe.cairngorm.contract.Contract;
+    import com.traffic.util.trace.ObjectTracerCache;
     import com.traffic.util.trace.Tracer;
 
     import flash.events.Event;
@@ -39,6 +40,7 @@ package com.traffic.util.debugging
 		private static var _whenToPrint:String = PRINT_ON_IDLE;
 		private static var _isDisabled:Boolean = false;
 		private static var _logger:ILogger;
+        private static var _tracer:Tracer = new Tracer(new ObjectTracerCache());
 
 		{
 			_logger = Log.getLogger("traffic-debug-tools");
@@ -354,7 +356,7 @@ package com.traffic.util.debugging
 
         public static function printObject(object:Object):String
         {
-            return new Tracer(object).trace();
+            return _tracer.trace(object);
         }
 
         /**
@@ -362,7 +364,7 @@ package com.traffic.util.debugging
          * */
         public static function registerNewObjectTracer(classOfTracedObject:Class, tracer:Class):void
         {
-            new Tracer(null).register(getQualifiedClassName(classOfTracedObject), tracer);
+            _tracer.register(classOfTracedObject, tracer);
         }
 
         public static function trackNewInstance(instance:Object, log:Boolean = false):String
