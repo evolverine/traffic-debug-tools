@@ -132,17 +132,22 @@ From this point onward every time an item is pushed or popped from the array you
 	45:01.192 push: hello world!
 ```
 
-If you need to, you can easily extend more functions, such as `join()` or `filter()`, you can do so directly in `InspectableArray`, or in your own class which extends `InspectableArray`.
+If you need to, you can easily extend more functions, such as `join()` or `filter()`. You can do so directly in `InspectableArray`, or in your own class which extends `InspectableArray`.
 
 ### Dispatching and using debugging events
-Problem: when an event occurs you'd like to trace the state of other, inaccessible data. For instance, when the user changes the product price in a grid editor, you'd like to trace the value of the minimum allowed price (stored in UserSettingsModel.as, which you cannot access from the editor). Without traffic-debug-tools you could create, say, TempGlobalsForDebugging.as, then make sure it contains the value of the minimum price, and then trace it when the user changes a price in the grid. Another option could be to dispatch a bubbling event when the user changes a value, and catch it somewhere you have access to all the data (say in the main application file), and trace it there. This can be cumbersome and time consuming because in a high level class you need to jump through many hoops to access the user setting. It's also potentially buggy, because the event could be cancelled at any point in its bubbling by existing user code.
-With tdt there's a simpler solution. You dispatch an event anywhere, and handle it anywhere else, in as many places as you need. This means that you always have easy access to the data you want to trace.
+*Problem*: when an event occurs you'd like to trace the state of other, inaccessible data. For instance, when the user changes the product price in a grid editor, you'd like to trace the value of the minimum allowed price (stored in UserSettingsModel.as, which you cannot access from the editor).
+
+Without traffic-debug-tools you could create, say, TempGlobalsForDebugging.as, then make sure it contains the value of the minimum price, and then trace it when the user changes a price in the grid. Another option could be to dispatch a bubbling event when the user changes a value, and catch it somewhere you have access to all the data (say in the main application file), and trace it there.
+
+This can be cumbersome and time consuming because in a high level class you need to jump through many hoops to access the user setting. It's also potentially buggy, because the event could be cancelled at any point in its bubbling by existing user code.
+
+With tdt there's a simpler *solution*: you dispatch an event from anywhere you want, and handle it anywhere else, in as many places as you need. This means that you always have easy access to the data you want to trace.
 
 ```javascript
 //in ProductPriceRenderer.mxml
 private function onPriceChange(event:FlexEvent):void
 {
-	product.price = priceField.value;
+	product.price = priceField.value; //this code was already there
 	tdt.dispatchEvent(new EventWithData("priceChange", priceField.value));
 }
 
@@ -160,7 +165,7 @@ private function onPriceChanged(event:EventWithData):void
 ```
 
 ### Enabling and disabling traces
-Sometimes, to remove trace noise, you want to disable all tdt traces until an event occurs, and then re-enable them.
+Sometimes, to remove trace noise, you want to disable all ```tdt``` traces until an event occurs, and then re-enable them.
 
 ```javascript
 private function onCreationComplete(event:FlexEvent):void
