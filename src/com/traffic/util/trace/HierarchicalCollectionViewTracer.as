@@ -7,6 +7,11 @@ package com.traffic.util.trace {
 
     import mx.logging.ILogger;
 
+    /**
+     * Note that currently the HierarchicalCollectionViewTracer is very simple, and only
+     * traces each node on a separate line, regardless of depth. It can definitely be
+     * improved.
+     */
     internal class HierarchicalCollectionViewTracer implements IObjectTracer
     {
         public function trace(what:Object):String
@@ -19,7 +24,7 @@ package com.traffic.util.trace {
             var cursor:HierarchicalCollectionViewCursor = target.createCursor() as HierarchicalCollectionViewCursor;
             while(!cursor.afterLast)
             {
-                result += tdt.printObject(cursor.current) + "\n";
+                result += tdt.traceObject(cursor.current) + "\n";
                 cursor.moveNext();
             }
 

@@ -354,7 +354,7 @@ package com.traffic.util.debugging
             _eventDispatcher.removeEventListener(listenerType, listener, useCapture);
         }
 
-        public static function printObject(object:Object):String
+        public static function traceObject(object:Object):String
         {
             return _tracer.trace(object);
         }
