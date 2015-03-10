@@ -22,7 +22,7 @@ package com.traffic.util.trace {
         }
 
         [Test]
-        public function test_something():void
+        public function test_that_nodes_are_traced_in_order():void
         {
             //given
             const objectToTrace:HierarchicalCollectionView = generateHierarchyViewWithOpenNodes();

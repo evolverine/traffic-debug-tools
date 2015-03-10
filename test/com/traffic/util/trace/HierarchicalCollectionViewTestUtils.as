@@ -43,7 +43,7 @@ package com.traffic.util.trace
 			return new HierarchicalCollectionView(new HierarchicalData(rootCollection), useAllNodes ? _allNodes : null);
 		}
 		
-		public function openAllNodes(hcv:HierarchicalCollectionView):void
+		public static function openAllNodes(hcv:HierarchicalCollectionView):void
 		{
 			var cursor:HierarchicalCollectionViewCursor = hcv.createCursor() as HierarchicalCollectionViewCursor;
 			while(!cursor.afterLast)
