@@ -1,3 +1,8 @@
+/**
+ * Distributed under Apache License v2.0. For more information
+ * see LICENSE.
+ */
+
 package com.traffic.util.trace {
     import com.adobe.cairngorm.contract.Contract;
 
