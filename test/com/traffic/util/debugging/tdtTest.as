@@ -11,6 +11,8 @@ package com.traffic.util.debugging
 
     public class tdtTest
 	{
+        private static const STACK_TRACE_LIMIT:int = 64;
+
 		[Test]
 		public function test_getFunctionsFromStackTrace_with_simple_stack_trace():void
 		{
@@ -304,13 +306,41 @@ package com.traffic.util.debugging
             //then
             var logCopy:String = logTarget.log;
 
-            for(var i:int = stackFunctions.length >= 64 ? 1 : 0; i < stackFunctions.length; i++)
+            for(var i:int = stackFunctions.length >= STACK_TRACE_LIMIT ? 1 : 0; i < stackFunctions.length; i++)
             {
                 var stackFunction:String = stackFunctions[i];
                 var positionOfFunctionInTrace:int = logCopy.indexOf(stackFunction);
                 assertThat("The function " + stackFunction + " doesn't exist in the log!\nLOG: " + logTarget.log + "CURRENT STACK TRACE: " + currentStackTrace, positionOfFunctionInTrace != -1);
                 logCopy = logCopy.substr(positionOfFunctionInTrace + stackFunction.length);
             }
+        }
+
+        [Test]
+        public function test_the_limit_of_stack_traces():void
+        {
+            //when
+            var errorWithLongStackTrace:Error = getErrorWithLongStackTrace();
+            var stackTraceLines:Array = errorWithLongStackTrace.getStackTrace().split("\n");
+            var actualLimit:int = stackTraceLines.length - 1; //minus the first line, which is the error description
+
+            //then
+            assertEquals(STACK_TRACE_LIMIT, actualLimit);
+        }
+
+        private function getErrorWithLongStackTrace():Error
+        {
+            function generateErrorAfterManyRecursions():void
+            {
+                if(++counter < 100)
+                    generateErrorAfterManyRecursions();
+                else
+                    error = new Error();
+            }
+
+            var counter:int = 0;
+            var error:Error = null;
+            generateErrorAfterManyRecursions();
+            return error;
         }
 		
 		private static function arraysEqual(a1:Array, a2:Array):Boolean
