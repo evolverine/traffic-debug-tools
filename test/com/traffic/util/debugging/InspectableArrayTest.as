@@ -80,5 +80,26 @@ package com.traffic.util.debugging {
             //then
             assertThat(logTarget.log.indexOf(pushedString) != -1);
         }
+
+        [Test]
+        public function test_array_is_cloned_correctly():void
+        {
+            //given
+            const source:Array = [];
+            source["hey"] = "you";
+            source[null] = "null?";
+            source[2] = undefined;
+            source[undefined] = 12345;
+            source[-999] = "ok";
+
+            //when
+            const inspectableArray:InspectableArray = InspectableArray.fromArray(source);
+
+            //then
+            for(var s:String in source)
+            {
+                assertEquals("item not copied correctly in the destination", source[s], inspectableArray[s]);
+            }
+        }
     }
 }

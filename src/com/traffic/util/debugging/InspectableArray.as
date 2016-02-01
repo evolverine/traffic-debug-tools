@@ -30,5 +30,15 @@ package com.traffic.util.debugging
 			tdt.debug("pop: " + poppedItem, "", true);
             return poppedItem;
         }
+
+		public static function fromArray(source:Array):InspectableArray
+		{
+			var result:InspectableArray = new InspectableArray();
+			for(var s:String in source)
+			{
+				result[s] = source[s];
+			}
+			return result;
+		}
 	}
 }
