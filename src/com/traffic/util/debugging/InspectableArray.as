@@ -1,7 +1,5 @@
 package com.traffic.util.debugging
 {
-	import mx.collections.CursorBookmark;
-
 	public dynamic class InspectableArray extends Array
 	{
 		public function InspectableArray(...parameters)
