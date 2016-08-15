@@ -209,43 +209,37 @@ package com.traffic.util.debugging
         private static function getActivityStreamsAsXMLString():String
         {
             var streams:XMLDocument = new XMLDocument();
+            var rootNode:XMLNode = new XMLNode(1, "debug");
+            streams.appendChild(rootNode);
 
-            var rootNode:XMLNode = streams.createElement("debug");
             var previousNode:XMLNode = rootNode;
-            streams.appendChild(previousNode);
             var previousPathVariation:String = "";
 
             for each(var stream:Array in _streams)
             {
                 var headerPath:Array = getCommonPath(stream);
-                for (var i:int = 0; i < headerPath.length; i++)
-                {
-                    var functionNode:XMLNode = streams.createElement("call");
-                    functionNode.attributes = {name: headerPath[i]};
-                    (previousNode || streams).appendChild(functionNode);
-                    previousNode = functionNode;
-                }
+                var noHeaderFunctions:int = headerPath.length;
+
+                var nodesForHeader:Object = createNestedNodes(headerPath, "call");
+                previousNode.appendChild(nodesForHeader.parent);
+                previousNode = nodesForHeader.lastChild;
 
                 for each(var currentStack:Array in stream)
                 {
-                    var pathVariation:Array = currentStack.slice(headerPath.length);
+                    var pathVariation:Array = currentStack.slice(noHeaderFunctions);
                     var pathVariationString:String = pathVariation.join();
-                    var pathDifferentFromHeaderPath:Boolean = headerPath.length < currentStack.length;
+                    var pathDifferentFromHeaderPath:Boolean = noHeaderFunctions < currentStack.length;
 
                     if (pathDifferentFromHeaderPath && pathVariation.join() != previousPathVariation)
                     {
-                        for (var i:int = 0; i < pathVariation.length; i++)
-                        {
-                            var functionNode:XMLNode = streams.createElement("call");
-                            functionNode.attributes = {name: pathVariation[i]};
-                            (previousNode || streams).appendChild(functionNode);
-                            previousNode = functionNode;
-                        }
+                        var nodesForVariation:Object = createNestedNodes(pathVariation, "call");
+                        previousNode.appendChild(nodesForVariation.parent);
+                        previousNode = nodesForVariation.lastChild;
                     }
 
-                    var activityNode:XMLNode = streams.createElement("activity");
+                    var activityNode:XMLNode = new XMLNode(1, "activity");
                     activityNode.attributes = {time: _activityByPath[currentStack].time};
-                    activityNode.appendChild(streams.createTextNode(_activityByPath[currentStack].activity));
+                    activityNode.appendChild(new XMLNode(3, _activityByPath[currentStack].activity));
                     previousNode.appendChild(activityNode);
 
                     previousPathVariation = pathVariationString;
@@ -255,6 +249,27 @@ package com.traffic.util.debugging
             }
 
             return streams.toString();
+        }
+
+        private static function createNestedNodes(stringsArray:Array, nodesName:String):Object
+        {
+            var parentNode:XMLNode;
+            var previousNode:XMLNode;
+            for (var i:int = 0; i < stringsArray.length; i++)
+            {
+                var node:XMLNode = new XMLNode(1, "call");
+                node.attributes = {name : stringsArray[i]};
+
+                if(!parentNode)
+                    parentNode = node;
+
+                if(previousNode)
+                    previousNode.appendChild(node);
+
+                previousNode = node;
+            }
+
+            return {parent:parentNode, lastChild:previousNode};
         }
 
         private static function getActivityStreamsAsString():String

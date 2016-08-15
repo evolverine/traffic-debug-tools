@@ -6,7 +6,6 @@
 package com.traffic.util.debugging
 {
     import flash.events.Event;
-    import flash.xml.XMLDocument;
     import flash.xml.XMLNode;
 
     import mx.logging.Log;
@@ -15,7 +14,6 @@ package com.traffic.util.debugging
     import org.flexunit.assertThat;
     import org.flexunit.asserts.assertEquals;
     import org.flexunit.asserts.assertFalse;
-    import org.flexunit.asserts.assertNotNull;
     import org.flexunit.asserts.assertTrue;
 
     public class tdtTest
