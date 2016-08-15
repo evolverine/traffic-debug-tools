@@ -6,6 +6,8 @@
 package com.traffic.util.debugging
 {
     import flash.events.Event;
+    import flash.xml.XMLDocument;
+    import flash.xml.XMLNode;
 
     import mx.logging.Log;
     import mx.utils.StringUtil;
@@ -13,6 +15,7 @@ package com.traffic.util.debugging
     import org.flexunit.assertThat;
     import org.flexunit.asserts.assertEquals;
     import org.flexunit.asserts.assertFalse;
+    import org.flexunit.asserts.assertNotNull;
     import org.flexunit.asserts.assertTrue;
 
     public class tdtTest
@@ -277,6 +280,56 @@ package com.traffic.util.debugging
 
             assertThat(actualLinesTrimmed[5].indexOf("hello") != -1);
             assertThat(actualLinesTrimmed[7].indexOf("hello") != -1);
+        }
+
+        [Test]
+        public function test_xml_log_for_two_identical_stack_traces_should_include_functions_only_once():void
+        {
+            //given
+            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
+
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            const stack:String = ( <![CDATA[
+                    Error
+            at com.traffic.util.debugging::tdt$/debug()[C:\Users\evolverine\Adobe Flash Builder 4.7\traffic-debug-tools\src\com\traffic\util\debugging\tdt.as:63]
+            at mx.managers::LayoutManager/validateSize()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:651]
+            at mx.managers::LayoutManager/doPhasedInstantiation()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:799]
+            at mx.managers::LayoutManager/doPhasedInstantiationCallback()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:1187]
+            ]]>).toString();
+
+            const expectedXML:XML = <debug>
+                <call name="LM.doPhasedInstantiationCallback">
+                    <call name=".doPhasedInstantiation">
+                        <call name=".validateSize">
+                            <activity time="17:07.759">hello</activity>
+                            <activity time="17:07.763">hello</activity>
+                        </call>
+                    </call>
+                </call>
+            </debug>;
+            const expected:XMLList = expectedXML.descendants();
+
+            //when
+            tdt.debug("hello", stack, false);
+            tdt.debug("hello", stack, false);
+            tdt.printActivityStreams(true);
+
+            //then
+            const actual:XMLList = new XML(logTarget.log).descendants();
+
+            for(var i:int = 0; i < expected.length(); i++)
+            {
+                var expectedNode:XML = expected[i];
+                var actualNode:XML = actual[i];
+                if(expectedNode.name() == "call")
+                    assertEquals(actualNode.attribute("name"), expectedNode.attribute("name"));
+                else if(expectedNode.name() == "activity")
+                    assertThat(actualNode.attribute("time").toString().length > 0);
+                else
+                    assertEquals(actualNode.toString(), expectedNode.toString());
+            }
         }
 
         [Test]

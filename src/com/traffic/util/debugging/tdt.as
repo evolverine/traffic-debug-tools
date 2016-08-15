@@ -9,6 +9,8 @@ package com.traffic.util.debugging
     import flash.events.Event;
     import flash.events.EventDispatcher;
     import flash.utils.Dictionary;
+    import flash.xml.XMLDocument;
+    import flash.xml.XMLNode;
 
     import mx.core.FlexGlobals;
     import mx.core.UIComponent;
@@ -26,6 +28,9 @@ package com.traffic.util.debugging
 		public static const PRINT_ON_IDLE:String = "printOnIdle";
 		public static const PRINT_MANUAL:String = "printWhenUserRequestsIt";
 
+		public static const FORMAT_XML:String = "format_XML";
+		public static const FORMAT_STRING:String = "format_String";
+
         private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
 		private static const _allInstances:Array = [];
 
@@ -41,17 +46,19 @@ package com.traffic.util.debugging
 		private static var _isDisabled:Boolean = false;
 		private static var _logger:ILogger;
         private static var _tracer:Tracer = new Tracer(new ObjectTracerCache());
+        private static var _printFormat:String = FORMAT_STRING;
 
 		{
 			_logger = Log.getLogger("traffic-debug-tools");
 			Log.addTarget(new TraceTarget());
 		}
 
-		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, whenToPrint:String = PRINT_ON_IDLE):void
+		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, whenToPrint:String = PRINT_ON_IDLE, printFormat:String = FORMAT_STRING):void
 		{
 			_abbreviateClassNames = abbreviateClassNames;
 			_skipClassNamesWhenIdentical = skipClassNamesWhenIdentical;
 			_whenToPrint = whenToPrint;
+			_printFormat = printFormat;
 		}
 
 		public static function debug(activity:String = "", stackTrace:String = "", printImmediately:Boolean = false):void
@@ -70,7 +77,7 @@ package com.traffic.util.debugging
                 activity = stackFunctions[stackFunctions.length - 1] + "()";
 
 			_paths.push(stackFunctions);
-			_activityByPath[stackFunctions] = _dateFormatter.format(new Date()) + " " + activity;
+			_activityByPath[stackFunctions] = {time:_dateFormatter.format(new Date()), activity:activity};
 			
 			
 			var previousFirstFunc:String = previousPaths.length ? previousPaths[0] : "";
@@ -192,42 +199,100 @@ package com.traffic.util.debugging
 		 */
 		public static function getPrettyPrintedActivityStreams():String
 		{
-			var streams:String = "";
-			var previousPathVariation:String = "";
-			
-			for each(var stream:Array in _streams)
-			{
-				var headerPath:Array = getCommonPath(stream);
-				if(headerPath && headerPath.length)
-				{
-					streams += "\n==================================\n";
-					streams += prettyPrintPath(headerPath);
-					streams += "\n==================================\n";
-				}
-				
-				for each(var currentStack:Array in stream)
-				{
-					var pathVariation:Array = currentStack.slice(headerPath.length);
-					var pathVariationString:String = pathVariation.join();
-					var pathDifferentFromHeaderPath:Boolean = headerPath.length < currentStack.length;
-					
-					if(pathDifferentFromHeaderPath && pathVariation.join() != previousPathVariation)
-						streams += "\n-> " + prettyPrintPath(pathVariation, 3) + "\n" + StringUtils.repeatString("\t", 2);
-					else if(streams)
-						streams += "\n\t";
-					streams += _activityByPath[currentStack];
-					if(streams)
-						streams += "\n";
-					
-					previousPathVariation = pathVariationString;
-				}
-				
-				if(streams)
-					streams += "\n";
-			}
-			
-			return streams;
+			if(_printFormat == FORMAT_STRING)
+                return getActivityStreamsAsString();
+            else if(_printFormat == FORMAT_XML)
+                return getActivityStreamsAsXMLString();
+            return "";
 		}
+
+        private static function getActivityStreamsAsXMLString():String
+        {
+            var streams:XMLDocument = new XMLDocument();
+
+            var previousNode:XMLNode = streams.createElement("debug");
+            streams.appendChild(previousNode);
+            var previousPathVariation:String = "";
+
+            for each(var stream:Array in _streams)
+            {
+                var headerPath:Array = getCommonPath(stream);
+                for (var i:int = 0; i < headerPath.length; i++)
+                {
+                    var functionNode:XMLNode = streams.createElement("call");
+                    functionNode.attributes = {name: headerPath[i]};
+                    (previousNode || streams).appendChild(functionNode);
+                    previousNode = functionNode;
+                }
+
+                for each(var currentStack:Array in stream)
+                {
+                    var pathVariation:Array = currentStack.slice(headerPath.length);
+                    var pathVariationString:String = pathVariation.join();
+                    var pathDifferentFromHeaderPath:Boolean = headerPath.length < currentStack.length;
+
+                    if (pathDifferentFromHeaderPath && pathVariation.join() != previousPathVariation)
+                    {
+                        for (var i:int = 0; i < pathVariation.length; i++)
+                        {
+                            var functionNode:XMLNode = streams.createElement("call");
+                            functionNode.attributes = {name: pathVariation[i]};
+                            (previousNode || streams).appendChild(functionNode);
+                            previousNode = functionNode;
+                        }
+                    }
+
+                    var activityNode:XMLNode = streams.createElement("activity");
+                    activityNode.attributes = {time: _activityByPath[currentStack].time};
+                    activityNode.appendChild(streams.createTextNode(_activityByPath[currentStack].activity));
+                    previousNode.appendChild(activityNode);
+
+                    previousPathVariation = pathVariationString;
+                }
+            }
+
+            return streams.toString();
+        }
+
+        private static function getActivityStreamsAsString():String
+        {
+            var streams:String = "";
+            var previousPathVariation:String = "";
+
+            for each(var stream:Array in _streams)
+            {
+                var headerPath:Array = getCommonPath(stream);
+                if(headerPath && headerPath.length)
+                {
+                    streams += "\n==================================\n";
+                    streams += prettyPrintPath(headerPath);
+                    streams += "\n==================================\n";
+                }
+
+                for each(var currentStack:Array in stream)
+                {
+                    var pathVariation:Array = currentStack.slice(headerPath.length);
+                    var pathVariationString:String = pathVariation.join();
+                    var pathDifferentFromHeaderPath:Boolean = headerPath.length < currentStack.length;
+
+                    if(pathDifferentFromHeaderPath && pathVariation.join() != previousPathVariation)
+                        streams += "\n-> " + prettyPrintPath(pathVariation, 3) + "\n" + StringUtils.repeatString("\t", 2);
+                    else if(streams)
+                        streams += "\n\t";
+                    streams += _activityByPath[currentStack].time + " " + _activityByPath[currentStack].activity;
+                    if(streams)
+                        streams += "\n";
+
+                    previousPathVariation = pathVariationString;
+                }
+
+                if(streams)
+                    streams += "\n";
+            }
+
+            return streams;
+        }
+
 		
 		private static function getCommonPath(paths:Array):Array
 		{
