@@ -32,7 +32,7 @@ package com.traffic.util.trace {
         }
 
         [Test]
-        public function test_something():void
+        public function test_toString_used_with_mock_object():void
         {
             //given
             const NODE_DETAILS:String = "test";
@@ -45,6 +45,32 @@ package com.traffic.util.trace {
             //then
             assertEquals(NODE_DETAILS, nodeDetails);
             assertThat(node, received().method("toString"));
+        }
+
+        [Test]
+        public function test_toString_used_with_empty_object():void
+        {
+            //given
+            var node:Object = {};
+
+            //when
+            var nodeDetails:String = _sut.trace(node);
+
+            //then
+            assertEquals("[object Object]", nodeDetails);
+        }
+
+        [Test]
+        public function test_toString_used_with_dynamic_object():void
+        {
+            //given
+            var node:Object = {name:"Alice"};
+
+            //when
+            var nodeDetails:String = _sut.trace(node);
+
+            //then
+            assertEquals('{name:"Alice"}', nodeDetails);
         }
     }
 }
