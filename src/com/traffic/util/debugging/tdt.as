@@ -257,7 +257,7 @@ package com.traffic.util.debugging
             var previousNode:XMLNode;
             for (var i:int = 0; i < stringsArray.length; i++)
             {
-                var node:XMLNode = new XMLNode(1, "call");
+                var node:XMLNode = new XMLNode(1, nodesName);
                 node.attributes = {name : stringsArray[i]};
 
                 if(!parentNode)
