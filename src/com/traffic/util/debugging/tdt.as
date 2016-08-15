@@ -210,7 +210,8 @@ package com.traffic.util.debugging
         {
             var streams:XMLDocument = new XMLDocument();
 
-            var previousNode:XMLNode = streams.createElement("debug");
+            var rootNode:XMLNode = streams.createElement("debug");
+            var previousNode:XMLNode = rootNode;
             streams.appendChild(previousNode);
             var previousPathVariation:String = "";
 
@@ -249,6 +250,8 @@ package com.traffic.util.debugging
 
                     previousPathVariation = pathVariationString;
                 }
+
+                previousNode = rootNode;
             }
 
             return streams.toString();

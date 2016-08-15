@@ -324,7 +324,162 @@ package com.traffic.util.debugging
                 var expectedNode:XML = expected[i];
                 var actualNode:XML = actual[i];
                 if(expectedNode.name() == "call")
+                {
                     assertEquals(actualNode.attribute("name"), expectedNode.attribute("name"));
+                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), actualNode.descendants().length(), expectedNode.descendants().length());
+                }
+                else if(expectedNode.name() == "activity")
+                    assertThat(actualNode.attribute("time").toString().length > 0);
+                else
+                    assertEquals(actualNode.toString(), expectedNode.toString());
+            }
+        }
+
+        [Test]
+        public function test_xml_log_for_stack_traces_which_share_root():void
+        {
+            //given
+            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
+
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            const stack1:String = ( <![CDATA[
+                    Error
+            at com.traffic.util.debugging::tdt$/debug()[C:\Users\evolverine\Adobe Flash Builder 4.7\traffic-debug-tools\src\com\traffic\util\debugging\tdt.as:63]
+            at mx.managers::LayoutManager/validateSize()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:651]
+            at mx.managers::LayoutManager/doPhasedInstantiation()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:799]
+            at mx.managers::LayoutManager/doPhasedInstantiationCallback()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:1187]
+            ]]>).toString();
+
+            const stack2:String = ( <![CDATA[
+                    Error
+            at com.traffic.util.debugging::tdt$/debug()[C:\Users\evolverine\Adobe Flash Builder 4.7\traffic-debug-tools\src\com\traffic\util\debugging\tdt.as:70]
+            at spark.components::Group/measure()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\spark\components\Group.as:240]
+            at mx.core::UIComponent/measureSizes()[C:\Users\evolverine\workspace\flex-sdk\frameworks\projects\framework\src\mx\core\UIComponent.as:9038]
+            at mx.core::UIComponent/validateSize()[C:\Users\evolverine\workspace\flex-sdk\frameworks\projects\framework\src\mx\core\UIComponent.as:8962]
+            at spark.components::Group/validateSize()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\spark\components\Group.as:1082]
+            at mx.managers::LayoutManager/validateSize()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:672]
+            at mx.managers::LayoutManager/doPhasedInstantiation()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:799]
+            at mx.managers::LayoutManager/doPhasedInstantiationCallback()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:1187]
+            ]]>).toString();
+
+            const expectedXML:XML = <debug>
+                <call name="LM.doPhasedInstantiationCallback">
+                    <call name=".doPhasedInstantiation">
+                        <call name=".validateSize">
+                            <activity time="17:07.759">hello</activity>
+                            <call name="G.validateSize">
+                                <call name="UIC.validateSize">
+                                    <call name=".measureSizes">
+                                        <call name="G.measure">
+                                            <activity time="17:08.159">measuring</activity>
+                                        </call>
+                                    </call>
+                                </call>
+                            </call>
+                        </call>
+                    </call>
+                </call>
+            </debug>;
+            const expected:XMLList = expectedXML.descendants();
+
+            //when
+            tdt.debug("hello", stack1, false);
+            tdt.debug("measuring", stack2, false);
+            tdt.printActivityStreams(true);
+
+            //then
+            const actual:XMLList = new XML(logTarget.log).descendants();
+
+            for(var i:int = 0; i < expected.length(); i++)
+            {
+                var expectedNode:XML = expected[i];
+                var actualNode:XML = actual[i];
+                if(expectedNode.name() == "call")
+                {
+                    assertEquals(actualNode.attribute("name"), expectedNode.attribute("name"));
+                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), actualNode.descendants().length(), expectedNode.descendants().length());
+                }
+                else if(expectedNode.name() == "activity")
+                    assertThat(actualNode.attribute("time").toString().length > 0);
+                else
+                    assertEquals(actualNode.toString(), expectedNode.toString());
+            }
+        }
+
+        [Test]
+        public function test_xml_log_for_stack_traces_which_do_not_share_root():void
+        {
+            //given
+            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
+
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            const stack1:String = ( <![CDATA[
+                    Error
+            at com.traffic.util.debugging::tdt$/debug()[C:\Users\evolverine\Adobe Flash Builder 4.7\traffic-debug-tools\src\com\traffic\util\debugging\tdt.as:63]
+            at mx.managers::LayoutManager/validateSize()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:651]
+            at mx.managers::LayoutManager/doPhasedInstantiation()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:799]
+            at mx.managers::LayoutManager/doPhasedInstantiationCallback()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:1187]
+            ]]>).toString();
+
+            const stack2:String = ( <![CDATA[
+                    Error
+            at com.traffic.util.debugging::tdt$/debugSimilar()[C:\Users\evolverine\Adobe Flash Builder 4.7\traffic-debug-tools\src\com\traffic\util\debugging\tdt.as:98]
+            at mx.managers.systemClasses::ChildManager/initializeTopLevelWindow()[C:\Users\evolverine\workspace\flex-sdk\frameworks\projects\framework\src\mx\managers\systemClasses\ChildManager.as:319]
+            at mx.managers::SystemManager/initializeTopLevelWindow()[C:\Users\evolverine\workspace\flex-sdk\frameworks\projects\framework\src\mx\managers\SystemManager.as:3065]
+            at flash.events::EventDispatcher/dispatchEventFunction()
+            at flash.events::EventDispatcher/dispatchEvent()
+            at mx.preloaders::Preloader/timerHandler()[C:\Users\evolverine\workspace\flex-sdk\frameworks\projects\framework\src\mx\preloaders\Preloader.as:572]
+            at flash.utils::Timer/_timerDispatch()
+            at flash.utils::Timer/tick()
+            ]]>).toString();
+
+            const expectedXML:XML = <debug>
+                <call name="LM.doPhasedInstantiationCallback">
+                    <call name=".doPhasedInstantiation">
+                        <call name=".validateSize">
+                            <activity time="17:07.759">hello</activity>
+                        </call>
+                    </call>
+                </call>
+                <call name="T.tick">
+                    <call name="._timerDispatch">
+                        <call name="P.timerHandler">
+                            <call name="ED.dispatchEvent">
+                                <call name=".dispatchEventFunction">
+                                    <call name="SM.initializeTopLevelWindow">
+                                        <call name="CM.initializeTopLevelWindow">
+                                            <activity time="17:08.159">measuring</activity>
+                                        </call>
+                                    </call>
+                                </call>
+                            </call>
+                        </call>
+                    </call>
+                </call>
+            </debug>;
+            const expected:XMLList = expectedXML.descendants();
+
+            //when
+            tdt.debug("hello", stack1, false);
+            tdt.debug("measuring", stack2, false);
+            tdt.printActivityStreams(true);
+
+            //then
+            const actual:XMLList = new XML(logTarget.log).descendants();
+
+            for(var i:int = 0; i < expected.length(); i++)
+            {
+                var expectedNode:XML = expected[i];
+                var actualNode:XML = actual[i];
+                if(expectedNode.name() == "call")
+                {
+                    assertEquals(actualNode.attribute("name"), expectedNode.attribute("name"));
+                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), actualNode.descendants().length(), expectedNode.descendants().length());
+                }
                 else if(expectedNode.name() == "activity")
                     assertThat(actualNode.attribute("time").toString().length > 0);
                 else
