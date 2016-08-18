@@ -320,7 +320,6 @@ package com.traffic.util.debugging
                     </call>
                 </call>
             </debug>;
-            const expected:XMLList = expectedXML.descendants();
 
             //when
             tdt.debug("hello", stack, false);
@@ -328,22 +327,7 @@ package com.traffic.util.debugging
             tdt.printActivityStreams(true);
 
             //then
-            const actual:XMLList = new XML(logTarget.log).descendants();
-
-            for(var i:int = 0; i < expected.length(); i++)
-            {
-                var expectedNode:XML = expected[i];
-                var actualNode:XML = actual[i];
-                if(expectedNode.name() == "call")
-                {
-                    assertEquals(expectedNode.attribute("name"), actualNode.attribute("name"));
-                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), expectedNode.descendants().length(), actualNode.descendants().length());
-                }
-                else if(expectedNode.name() == "activity")
-                    assertThat(actualNode.attribute("time").toString().length > 0);
-                else
-                    assertEquals(expectedNode.toString(), actualNode.toString());
-            }
+            assertActualAndExpectedXMLsMatch(new XML(logTarget.log), expectedXML);
         }
 
         [Test]
@@ -393,7 +377,6 @@ package com.traffic.util.debugging
                     </call>
                 </call>
             </debug>;
-            const expected:XMLList = expectedXML.descendants();
 
             //when
             tdt.debug("hello", stack1, false);
@@ -401,22 +384,7 @@ package com.traffic.util.debugging
             tdt.printActivityStreams(true);
 
             //then
-            const actual:XMLList = new XML(logTarget.log).descendants();
-
-            for(var i:int = 0; i < expected.length(); i++)
-            {
-                var expectedNode:XML = expected[i];
-                var actualNode:XML = actual[i];
-                if(expectedNode.name() == "call")
-                {
-                    assertEquals(expectedNode.attribute("name"), actualNode.attribute("name"));
-                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), expectedNode.descendants().length(), actualNode.descendants().length());
-                }
-                else if(expectedNode.name() == "activity")
-                    assertThat(actualNode.attribute("time").toString().length > 0);
-                else
-                    assertEquals(expectedNode.toString(), actualNode.toString());
-            }
+            assertActualAndExpectedXMLsMatch(new XML(logTarget.log), expectedXML);
         }
 
         [Test]
@@ -501,22 +469,7 @@ package com.traffic.util.debugging
             tdt.printActivityStreams(true);
 
             //then
-            const actual:XMLList = new XML(logTarget.log).descendants();
-
-            for(var i:int = 0; i < expected.length(); i++)
-            {
-                var expectedNode:XML = expected[i];
-                var actualNode:XML = actual[i];
-                if(expectedNode.name() == "call")
-                {
-                    assertEquals(expectedNode.attribute("name"), actualNode.attribute("name"));
-                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), expectedNode.descendants().length(), actualNode.descendants().length());
-                }
-                else if(expectedNode.name() == "activity")
-                    assertThat(actualNode.attribute("time").toString().length > 0);
-                else
-                    assertEquals(expectedNode.toString(), actualNode.toString());
-            }
+            assertActualAndExpectedXMLsMatch(new XML(logTarget.log), expectedXML);
         }
 
         [Test]
@@ -580,22 +533,7 @@ package com.traffic.util.debugging
             tdt.printActivityStreams(true);
 
             //then
-            const actual:XMLList = new XML(logTarget.log).descendants();
-
-            for(var i:int = 0; i < expected.length(); i++)
-            {
-                var expectedNode:XML = expected[i];
-                var actualNode:XML = actual[i];
-                if(expectedNode.name() == "call")
-                {
-                    assertEquals(expectedNode.attribute("name"), actualNode.attribute("name"));
-                    assertEquals("The number of descendants for " + actualNode.attribute("name") + " is " + actualNode.descendants().length() + ", but should be " + expectedNode.descendants().length(), expectedNode.descendants().length(), actualNode.descendants().length());
-                }
-                else if(expectedNode.name() == "activity")
-                    assertThat(actualNode.attribute("time").toString().length > 0);
-                else
-                    assertEquals(expectedNode.toString(), actualNode.toString());
-            }
+            assertActualAndExpectedXMLsMatch(new XML(logTarget.log), expectedXML);
         }
 
         [Test]
@@ -693,6 +631,29 @@ package com.traffic.util.debugging
 
             //then
             assertEquals(STACK_TRACE_LIMIT, actualLimit);
+        }
+
+
+
+        private static function assertActualAndExpectedXMLsMatch(actual:XML, expected:XML):void
+        {
+            var actualDescendants:XMLList = actual.descendants();
+            const expectedDescendants:XMLList = expected.descendants();
+            for(var i:int = 0; i < expectedDescendants.length(); i++)
+            {
+                var expectedNode:XML = expectedDescendants[i];
+                var actualNode:XML = actualDescendants[i];
+
+                if(expectedNode.name() == "call")
+                {
+                    assertEquals(expectedNode.attribute("name"), actualNode.attribute("name"));
+                    assertEquals(expectedNode.descendants().length(), actualNode.descendants().length());
+                }
+                else if(expectedNode.name() == "activity")
+                    assertThat(actualNode.attribute("time").toString().length > 0);
+                else
+                    assertEquals(expectedNode.toString(), actualNode.toString());
+            }
         }
 
         private function getErrorWithLongStackTrace():Error
