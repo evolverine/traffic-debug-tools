@@ -23,7 +23,7 @@ package com.traffic.util.debugging
         [Before]
         public function setUp():void
         {
-
+            tdt.setUp(true, true, tdt.PRINT_MANUAL);
         }
 
 
@@ -251,54 +251,9 @@ package com.traffic.util.debugging
         }
 
         [Test]
-        public function test_log_for_two_identical_stack_traces_should_include_functions_only_once():void
-        {
-            //given
-            tdt.setUp(true, true, tdt.PRINT_MANUAL);
-
-            var logTarget:StringLogTarget = new StringLogTarget();
-            Log.addTarget(logTarget);
-
-            const stack:String = ( <![CDATA[
-                Error
-                at com.traffic.util.debugging::tdt$/debug()[C:\Users\evolverine\Adobe Flash Builder 4.7\traffic-debug-tools\src\com\traffic\util\debugging\tdt.as:63]
-                at mx.managers::LayoutManager/validateSize()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:651]
-                at mx.managers::LayoutManager/doPhasedInstantiation()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:799]
-                at mx.managers::LayoutManager/doPhasedInstantiationCallback()[C:\Users\evolverine\Adobe Flash Builder 4.7\FLEX-33058\src\mx\managers\LayoutManager.as:1187]
-            ]]>).toString();
-
-            const expected:String = (<![CDATA[
-                ==================================
-                [LM.doPhasedInstantiationCallback] -> [.doPhasedInstantiation] -> [.validateSize]
-                ==================================
-
-                17:07.759 hello
-
-                17:07.763 hello
-            ]]>).toString();
-            const expectedLinesTrimmed:Array = StringUtil.trimArrayElements(expected, "\r\n").split("\r\n");
-
-            //when
-            tdt.debug("hello", stack, false);
-            tdt.debug("hello", stack, false);
-            tdt.printActivityStreams(true);
-
-            //then
-            var actualLinesTrimmed:Array = StringUtil.trimArrayElements(logTarget.log, "\n").split("\n");
-
-            for(var i:int = 0; i < 5; i++)
-               assertEquals(actualLinesTrimmed[i], expectedLinesTrimmed[i]);
-
-            assertThat(actualLinesTrimmed[5].indexOf("hello") != -1);
-            assertThat(actualLinesTrimmed[7].indexOf("hello") != -1);
-        }
-
-        [Test]
         public function test_xml_log_for_two_identical_stack_traces_should_include_functions_only_once():void
         {
             //given
-            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
-
             var logTarget:StringLogTarget = new StringLogTarget();
             Log.addTarget(logTarget);
 
@@ -334,8 +289,6 @@ package com.traffic.util.debugging
         public function test_xml_log_for_stack_traces_which_share_root():void
         {
             //given
-            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
-
             var logTarget:StringLogTarget = new StringLogTarget();
             Log.addTarget(logTarget);
 
@@ -391,8 +344,6 @@ package com.traffic.util.debugging
         public function test_xml_log_for_more_stack_traces_which_share_root():void
         {
             //given
-            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
-
             var logTarget:StringLogTarget = new StringLogTarget();
             Log.addTarget(logTarget);
 
@@ -476,8 +427,6 @@ package com.traffic.util.debugging
         public function test_xml_log_for_stack_traces_which_do_not_share_root():void
         {
             //given
-            tdt.setUp(true, true, tdt.PRINT_MANUAL, tdt.FORMAT_XML);
-
             var logTarget:StringLogTarget = new StringLogTarget();
             Log.addTarget(logTarget);
 

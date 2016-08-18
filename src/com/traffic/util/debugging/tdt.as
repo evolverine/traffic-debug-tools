@@ -30,7 +30,6 @@ package com.traffic.util.debugging
 		public static const PRINT_MANUAL:String = "printWhenUserRequestsIt";
 
 		public static const FORMAT_XML:String = "format_XML";
-		public static const FORMAT_STRING:String = "format_String";
 
         private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
 		private static const _allInstances:Array = [];
@@ -47,19 +46,18 @@ package com.traffic.util.debugging
 		private static var _isDisabled:Boolean = false;
 		private static var _logger:ILogger;
         private static var _tracer:Tracer = new Tracer(new ObjectTracerCache());
-        private static var _printFormat:String = FORMAT_STRING;
+        private static var _printFormat:String = FORMAT_XML;
 
 		{
 			_logger = Log.getLogger("traffic-debug-tools");
 			Log.addTarget(new TraceTarget());
 		}
 
-		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, whenToPrint:String = PRINT_ON_IDLE, printFormat:String = FORMAT_STRING):void
+		public static function setUp(abbreviateClassNames:Boolean = false, skipClassNamesWhenIdentical:Boolean = true, whenToPrint:String = PRINT_ON_IDLE):void
 		{
 			_abbreviateClassNames = abbreviateClassNames;
 			_skipClassNamesWhenIdentical = skipClassNamesWhenIdentical;
 			_whenToPrint = whenToPrint;
-			_printFormat = printFormat;
 		}
 
 		public static function debug(activity:String = "", stackTrace:String = "", printImmediately:Boolean = false):void
@@ -127,16 +125,16 @@ package com.traffic.util.debugging
 		{
 			if(_paths.length)
 				return isSameActivityAsRegisteredActivity(activity, _activityByPath[_paths[_paths.length - 1]]) && areStacksEqual(stack, _paths[_paths.length - 1]);
-			
+
 			return false;
 		}
-		
+
 		private static function isSameActivityAsRegisteredActivity(unregisteredActivity:String, registeredActivity:String):Boolean
 		{
 			var positionOfFirstSpace:int = registeredActivity.indexOf(" ");
 			return registeredActivity.indexOf(unregisteredActivity) == positionOfFirstSpace + 1;
 		}
-		
+
 		private static function areStacksEqual(stackA:Array, stackB:Array):Boolean
 		{
 			Contract.precondition(stackA != null && stackB != null);
@@ -200,9 +198,7 @@ package com.traffic.util.debugging
 		 */
 		public static function getPrettyPrintedActivityStreams():String
 		{
-			if(_printFormat == FORMAT_STRING)
-                return getActivityStreamsAsString();
-            else if(_printFormat == FORMAT_XML)
+            if(_printFormat == FORMAT_XML)
                 return getActivityStreamsAsXMLString();
             return "";
 		}
@@ -291,76 +287,7 @@ package com.traffic.util.debugging
             return {parent:parentNode, lastChild:previousNode};
         }
 
-        private static function getActivityStreamsAsString():String
-        {
-            var streams:String = "";
-            var previousPathVariation:String = "";
 
-            for each(var stream:Array in _streams)
-            {
-                var headerPath:Array = getCommonPath(stream);
-                if(headerPath && headerPath.length)
-                {
-                    streams += "\n==================================\n";
-                    streams += prettyPrintPath(headerPath);
-                    streams += "\n==================================\n";
-                }
-
-                for each(var currentStack:Array in stream)
-                {
-                    var pathVariation:Array = currentStack.slice(headerPath.length);
-                    var pathVariationString:String = pathVariation.join();
-                    var pathDifferentFromHeaderPath:Boolean = headerPath.length < currentStack.length;
-
-                    if(pathDifferentFromHeaderPath && pathVariation.join() != previousPathVariation)
-                        streams += "\n-> " + prettyPrintPath(pathVariation, 3) + "\n" + StringUtils.repeatString("\t", 2);
-                    else if(streams)
-                        streams += "\n\t";
-                    streams += _activityByPath[currentStack].time + " " + _activityByPath[currentStack].activity;
-                    if(streams)
-                        streams += "\n";
-
-                    previousPathVariation = pathVariationString;
-                }
-
-                if(streams)
-                    streams += "\n";
-            }
-
-            return streams;
-        }
-
-		
-		private static function getCommonPath(paths:Array):Array
-		{
-			if(!paths || !paths.length)
-				return [];
-			
-			if(paths.length == 1)
-				return paths[0].concat();
-			
-			var commonPath:Array = paths[0];
-			var i:int = 0;
-			while(++i < paths.length)
-			{
-				commonPath = ArrayUtils.intersectionFromBeginning(paths[i], commonPath);
-			}
-			
-			return commonPath;
-		}
-		
-		public static function prettyPrintPath(pathElements:Array, noTabs:int = 0, separator:String = " -> "):String
-		{
-			var path:String = StringUtils.repeatString("\t", noTabs);
-			
-			for(var j:int = 0; j < pathElements.length; j++)
-			{
-				path += "[" + pathElements[j] + "]" + (j == pathElements.length - 1 ? "" : separator);
-			}
-			
-			return path;
-		}
-		
 		/**
 		 * E.g.:
          Error
@@ -428,11 +355,6 @@ package com.traffic.util.debugging
 			
 			Contract.postcondition(functions != null);
 			return functions;
-		}
-
-		public static function whereAmI(separator:String = " -> "):String
-		{
-			return prettyPrintPath(getFunctionsFromStackTrace(new Error().getStackTrace(), _abbreviateClassNames, _skipClassNamesWhenIdentical, 1), 0, separator);
 		}
 
 
