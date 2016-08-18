@@ -212,46 +212,60 @@ package com.traffic.util.debugging
             var rootNode:XMLNode = new XMLNode(1, "debug");
             streams.appendChild(rootNode);
 
-            var previousNode:XMLNode = rootNode;
-            var previousPathVariation:String = "";
+            var previousStack:Array = null;
 
             for each(var stream:Array in _streams)
             {
-                var headerPath:Array = getCommonPath(stream);
-                var noHeaderFunctions:int = headerPath.length;
-
-                var nodesForHeader:Object = createNestedNodes(headerPath, "call");
-                previousNode.appendChild(nodesForHeader.parent);
-                previousNode = nodesForHeader.lastChild;
+                var previousVariationNodes:Object = {lastChild:rootNode, parent:null};
 
                 for each(var currentStack:Array in stream)
                 {
-                    var pathVariation:Array = currentStack.slice(noHeaderFunctions);
-                    var pathVariationString:String = pathVariation.join();
-                    var pathDifferentFromHeaderPath:Boolean = noHeaderFunctions < currentStack.length;
+                    var lastCommonNode:XMLNode = rootNode;
+                    var shortenedPathVariation:Array = currentStack;
 
-                    if (pathDifferentFromHeaderPath && pathVariation.join() != previousPathVariation)
+                    if(previousStack && previousStack.length)
                     {
-                        var nodesForVariation:Object = createNestedNodes(pathVariation, "call");
-                        previousNode.appendChild(nodesForVariation.parent);
-                        previousNode = nodesForVariation.lastChild;
+                        var commonVariationPath:Array = ArrayUtils.intersectionFromBeginning(previousStack, currentStack);
+                        if(commonVariationPath.length)
+                        {
+                            var i:int = commonVariationPath.length;
+                            shortenedPathVariation = currentStack.slice(i);
+
+                            //find the last common node
+                            i = previousStack.length - i;
+                            var tmpNode:XMLNode = previousVariationNodes.lastChild;
+                            while(i-- > 0)
+                            {
+                                tmpNode = tmpNode.parentNode;
+                            }
+                            lastCommonNode = tmpNode;
+                        }
+                    }
+
+                    var nodesForVariation:Object = createNestedNodes(shortenedPathVariation);
+                    if(nodesForVariation.parent)
+                    {
+                        lastCommonNode.appendChild(nodesForVariation.parent);
+                        previousVariationNodes = nodesForVariation;
+                    }
+                    else
+                    {
+                        previousVariationNodes = {lastChild:lastCommonNode, parent:null};
                     }
 
                     var activityNode:XMLNode = new XMLNode(1, "activity");
                     activityNode.attributes = {time: _activityByPath[currentStack].time};
                     activityNode.appendChild(new XMLNode(3, _activityByPath[currentStack].activity));
-                    previousNode.appendChild(activityNode);
+                    previousVariationNodes.lastChild.appendChild(activityNode);
 
-                    previousPathVariation = pathVariationString;
+                    previousStack = currentStack;
                 }
-
-                previousNode = rootNode;
             }
 
             return streams.toString();
         }
 
-        private static function createNestedNodes(stringsArray:Array, nodesName:String):Object
+        private static function createNestedNodes(stringsArray:Array, nodesName:String = "call"):Object
         {
             var parentNode:XMLNode;
             var previousNode:XMLNode;
