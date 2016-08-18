@@ -39,7 +39,6 @@ package com.traffic.util.debugging
 
         private static var _paths:Array = [];
 		private static var _activityByPath:Dictionary = new Dictionary(false);
-		private static var _streams:Array = [];
 		private static var _abbreviateClassNames:Boolean = false;
 		private static var _skipClassNamesWhenIdentical:Boolean = true;
 		private static var _whenToPrint:String = PRINT_ON_IDLE;
@@ -68,8 +67,6 @@ package com.traffic.util.debugging
             if(!stackTrace)
                 stackTrace = new Error().getStackTrace();
 
-			var previousPaths:Array = _paths.length ? _paths[_paths.length - 1] : [];
-			
 			const stackFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical);
 
             if(!activity)
@@ -77,13 +74,6 @@ package com.traffic.util.debugging
 
 			_paths.push(stackFunctions);
 			_activityByPath[stackFunctions] = {time:_dateFormatter.format(new Date()), activity:activity};
-			
-			
-			var previousFirstFunc:String = previousPaths.length ? previousPaths[0] : "";
-			if(stackFunctions[0] != previousFirstFunc)
-				_streams.push([]);
-
-			_streams[_streams.length - 1].push(stackFunctions);
 
             if(printImmediately || _whenToPrint == PRINT_IMMEDIATELY)
                 printActivityStreams();
@@ -170,7 +160,6 @@ package com.traffic.util.debugging
 		public static function clearActivities():void
 		{
 			_paths = [];
-			_streams = [];
 			_activityByPath = new Dictionary(false);
 		}
 		
@@ -212,38 +201,36 @@ package com.traffic.util.debugging
             var previousStack:Array = null;
             var lastCommonNode:XMLNode = rootNode;
 
-            for each(var stream:Array in _streams)
+            for each(var currentStack:Array in _paths)
             {
-                for each(var currentStack:Array in stream)
+                var uniquePartOfStack:Array = currentStack;
+
+                if(previousStack && previousStack.length)
                 {
-                    var uniquePartOfStack:Array = currentStack;
-
-                    if(previousStack && previousStack.length)
+                    var commonVariationPath:Array = ArrayUtils.intersectionFromBeginning(previousStack, currentStack);
+                    if(commonVariationPath.length)
                     {
-                        var commonVariationPath:Array = ArrayUtils.intersectionFromBeginning(previousStack, currentStack);
-                        if(commonVariationPath.length)
-                        {
-                            uniquePartOfStack = currentStack.slice(commonVariationPath.length);
-                            lastCommonNode = getAncestor(lastCommonNode, previousStack.length - commonVariationPath.length);
-                        }
-                        else
-                        {
-                            lastCommonNode = rootNode;
-                        }
+                        uniquePartOfStack = currentStack.slice(commonVariationPath.length);
+                        lastCommonNode = getAncestor(lastCommonNode, previousStack.length - commonVariationPath.length);
                     }
-
-                    var nodesForVariation:Object = createNestedNodes(uniquePartOfStack);
-                    if(nodesForVariation.parent)
+                    else
                     {
-                        lastCommonNode.appendChild(nodesForVariation.parent);
-                        lastCommonNode = nodesForVariation.lastChild;
+                        lastCommonNode = rootNode;
                     }
-
-                    lastCommonNode.appendChild(createActivityNode(_activityByPath[currentStack].activity, _activityByPath[currentStack].time));
-
-                    previousStack = currentStack;
                 }
+
+                var nodesForVariation:Object = createNestedNodes(uniquePartOfStack);
+                if(nodesForVariation.parent)
+                {
+                    lastCommonNode.appendChild(nodesForVariation.parent);
+                    lastCommonNode = nodesForVariation.lastChild;
+                }
+
+                lastCommonNode.appendChild(createActivityNode(_activityByPath[currentStack].activity, _activityByPath[currentStack].time));
+
+                previousStack = currentStack;
             }
+
 
             return streams.toString();
         }
