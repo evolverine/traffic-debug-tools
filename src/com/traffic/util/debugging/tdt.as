@@ -11,6 +11,7 @@ package com.traffic.util.debugging
     import flash.utils.Dictionary;
     import flash.xml.XMLDocument;
     import flash.xml.XMLNode;
+    import flash.xml.XMLNode;
 
     import mx.core.FlexGlobals;
     import mx.core.UIComponent;
@@ -168,7 +169,7 @@ package com.traffic.util.debugging
 			return app ? app.systemManager : null;
 		}
 		
-		private static function clearActivities():void
+		public static function clearActivities():void
 		{
 			_paths = [];
 			_streams = [];
@@ -213,56 +214,60 @@ package com.traffic.util.debugging
             streams.appendChild(rootNode);
 
             var previousStack:Array = null;
+            var lastCommonNode:XMLNode = rootNode;
 
             for each(var stream:Array in _streams)
             {
-                var previousVariationNodes:Object = {lastChild:rootNode, parent:null};
-
                 for each(var currentStack:Array in stream)
                 {
-                    var lastCommonNode:XMLNode = rootNode;
-                    var shortenedPathVariation:Array = currentStack;
+                    var uniquePartOfStack:Array = currentStack;
 
                     if(previousStack && previousStack.length)
                     {
                         var commonVariationPath:Array = ArrayUtils.intersectionFromBeginning(previousStack, currentStack);
                         if(commonVariationPath.length)
                         {
-                            var i:int = commonVariationPath.length;
-                            shortenedPathVariation = currentStack.slice(i);
-
-                            //find the last common node
-                            i = previousStack.length - i;
-                            var tmpNode:XMLNode = previousVariationNodes.lastChild;
-                            while(i-- > 0)
-                            {
-                                tmpNode = tmpNode.parentNode;
-                            }
-                            lastCommonNode = tmpNode;
+                            uniquePartOfStack = currentStack.slice(commonVariationPath.length);
+                            lastCommonNode = getAncestor(lastCommonNode, previousStack.length - commonVariationPath.length);
+                        }
+                        else
+                        {
+                            lastCommonNode = rootNode;
                         }
                     }
 
-                    var nodesForVariation:Object = createNestedNodes(shortenedPathVariation);
+                    var nodesForVariation:Object = createNestedNodes(uniquePartOfStack);
                     if(nodesForVariation.parent)
                     {
                         lastCommonNode.appendChild(nodesForVariation.parent);
-                        previousVariationNodes = nodesForVariation;
-                    }
-                    else
-                    {
-                        previousVariationNodes = {lastChild:lastCommonNode, parent:null};
+                        lastCommonNode = nodesForVariation.lastChild;
                     }
 
-                    var activityNode:XMLNode = new XMLNode(1, "activity");
-                    activityNode.attributes = {time: _activityByPath[currentStack].time};
-                    activityNode.appendChild(new XMLNode(3, _activityByPath[currentStack].activity));
-                    previousVariationNodes.lastChild.appendChild(activityNode);
+                    lastCommonNode.appendChild(createActivityNode(_activityByPath[currentStack].activity, _activityByPath[currentStack].time));
 
                     previousStack = currentStack;
                 }
             }
 
             return streams.toString();
+        }
+
+        private static function createActivityNode(activity:String, time:String):XMLNode
+        {
+            var activityNode:XMLNode = new XMLNode(1, "activity");
+            activityNode.attributes = {time:time};
+            activityNode.appendChild(new XMLNode(3, activity));
+            return activityNode;
+        }
+
+        private static function getAncestor(ofWhom:XMLNode, whichGeneration:int):XMLNode
+        {
+            var counter:XMLNode = ofWhom;
+            while(whichGeneration-- > 0 && counter)
+            {
+                counter = counter.parentNode;
+            }
+            return counter;
         }
 
         private static function createNestedNodes(stringsArray:Array, nodesName:String = "call"):Object

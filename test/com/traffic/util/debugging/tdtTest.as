@@ -20,6 +20,19 @@ package com.traffic.util.debugging
 	{
         private static const STACK_TRACE_LIMIT:int = 64;
 
+        [Before]
+        public function setUp():void
+        {
+
+        }
+
+
+        [After]
+        public function tearDown():void
+        {
+            tdt.clearActivities();
+        }
+
 		[Test]
 		public function test_getFunctionsFromStackTrace_with_simple_stack_trace():void
 		{
