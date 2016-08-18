@@ -11,7 +11,6 @@ package com.traffic.util.debugging
     import flash.utils.Dictionary;
     import flash.xml.XMLDocument;
     import flash.xml.XMLNode;
-    import flash.xml.XMLNode;
 
     import mx.core.FlexGlobals;
     import mx.core.UIComponent;
@@ -165,7 +164,7 @@ package com.traffic.util.debugging
 		
 		public static function printActivityStreams(thenClearActivities:Boolean = true):void
 		{
-			_logger.debug(getPrettyPrintedActivityStreams());
+			_logger.debug(getPrettyPrintedActivities());
 			
 			if(thenClearActivities)
 				clearActivities();
@@ -185,18 +184,18 @@ package com.traffic.util.debugging
 		 *	:LM update complete
 		 * 
 		 */
-		public static function getPrettyPrintedActivityStreams():String
+		public static function getPrettyPrintedActivities():String
 		{
             if(_printFormat == FORMAT_XML)
-                return getActivityStreamsAsXMLString();
+                return getActivitiesAsXMLString();
             return "";
 		}
 
-        private static function getActivityStreamsAsXMLString():String
+        private static function getActivitiesAsXMLString():String
         {
-            var streams:XMLDocument = new XMLDocument();
+            var xmlActivities:XMLDocument = new XMLDocument();
             var rootNode:XMLNode = new XMLNode(1, "debug");
-            streams.appendChild(rootNode);
+            xmlActivities.appendChild(rootNode);
 
             var previousStack:Array = null;
             var lastCommonNode:XMLNode = rootNode;
@@ -207,16 +206,9 @@ package com.traffic.util.debugging
 
                 if(previousStack && previousStack.length)
                 {
-                    var commonVariationPath:Array = ArrayUtils.intersectionFromBeginning(previousStack, currentStack);
-                    if(commonVariationPath.length)
-                    {
-                        uniquePartOfStack = currentStack.slice(commonVariationPath.length);
-                        lastCommonNode = getAncestor(lastCommonNode, previousStack.length - commonVariationPath.length);
-                    }
-                    else
-                    {
-                        lastCommonNode = rootNode;
-                    }
+                    var commonStack:Array = ArrayUtils.intersectionFromBeginning(previousStack, currentStack);
+                    uniquePartOfStack = currentStack.slice(commonStack.length);
+                    lastCommonNode = commonStack.length ? getAncestor(lastCommonNode, previousStack.length - commonStack.length) : rootNode;
                 }
 
                 var nodesForVariation:Object = createNestedNodes(uniquePartOfStack);
@@ -231,8 +223,7 @@ package com.traffic.util.debugging
                 previousStack = currentStack;
             }
 
-
-            return streams.toString();
+            return xmlActivities.toString();
         }
 
         private static function createActivityNode(activity:String, time:String):XMLNode
