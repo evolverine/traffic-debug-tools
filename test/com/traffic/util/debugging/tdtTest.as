@@ -5,11 +5,12 @@
 
 package com.traffic.util.debugging
 {
+    import com.traffic.util.logging.StringLogTarget;
+
     import flash.events.Event;
     import flash.xml.XMLNode;
 
     import mx.logging.Log;
-    import mx.utils.StringUtil;
 
     import org.flexunit.assertThat;
     import org.flexunit.asserts.assertEquals;
@@ -574,20 +575,63 @@ package com.traffic.util.debugging
         public function test_the_limit_of_stack_traces():void
         {
             //when
-            var errorWithLongStackTrace:Error = getErrorWithLongStackTrace();
-            var stackTraceLines:Array = errorWithLongStackTrace.getStackTrace().split("\n");
-            var actualLimit:int = stackTraceLines.length - 1; //minus the first line, which is the error description
+            const errorWithLongStackTrace:Error = getErrorWithLongStackTrace();
+            const stackTraceLines:Array = errorWithLongStackTrace.getStackTrace().split("\n");
+            const actualLimit:int = stackTraceLines.length - 1; //minus the first line, which is the error description
 
             //then
             assertEquals(STACK_TRACE_LIMIT, actualLimit);
         }
 
+        [Test]
+        public function test_setting_and_retrieving_string_value():void
+        {
+            //when
+            tdt.setValue("hello", "world");
 
+            //then
+            assertEquals("world", tdt.getValue("hello"));
+        }
+
+        [Test]
+        public function test_setting_and_retrieving_object():void
+        {
+            //given
+            var world:Object = {universe:2345, galaxy:198324};
+
+            //when
+            tdt.setValue("hello", world);
+
+            //then
+            assertEquals(world, tdt.getValue("hello"));
+        }
+
+        [Test]
+        public function test_retrieving_nonexistent_value_returns_undefined():void
+        {
+            //given
+            var world:Object = {universe:2345, galaxy:198324};
+
+            //when
+            tdt.setValue("hello", world);
+
+            //then
+            assertThat(undefined === tdt.getValue("nonexistent"));
+        }
+
+
+        private static function atLeastOneActivityInXML(actual:XML):Boolean
+        {
+            return actual..activity.length() > 0;
+        }
 
         private static function assertActualAndExpectedXMLsMatch(actual:XML, expected:XML):void
         {
-            var actualDescendants:XMLList = actual.descendants();
+            const actualDescendants:XMLList = actual.descendants();
             const expectedDescendants:XMLList = expected.descendants();
+
+            assertEquals(expectedDescendants.length(), actualDescendants.length());
+
             for(var i:int = 0; i < expectedDescendants.length(); i++)
             {
                 var expectedNode:XML = expectedDescendants[i];

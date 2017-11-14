@@ -45,6 +45,7 @@ package com.traffic.util.debugging
 		private static var _logger:ILogger;
         private static var _tracer:Tracer = new Tracer(new ObjectTracerCache());
         private static var _printFormat:String = FORMAT_XML;
+        private static var _keyValues:Array;
 
 		{
 			_logger = Log.getLogger("traffic-debug-tools");
@@ -99,7 +100,20 @@ package com.traffic.util.debugging
 			
 			debug(activity, stackTrace, printImmediately);
 		}
-		
+
+        public static function setValue(key:String, value:*):void
+        {
+            if(!_keyValues)
+                _keyValues = [];
+
+            _keyValues[key] = value;
+        }
+
+        public static function getValue(key:String):*
+        {
+            return _keyValues && (key in _keyValues) ? _keyValues[key] : undefined;
+        }
+
 		public static function enable():void
 		{
 			_isDisabled = false;
