@@ -302,19 +302,19 @@ package com.traffic.util.debugging
 				if(i >= lines.length - excludeLastItemsNo)
 					break; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 				
-				var functionAndDebugInfo:Array = lines[i].split("()");
-                var packageClassAccessorFunction:String = functionAndDebugInfo[0];
+				const functionAndDebugInfo:Array = lines[i].split("()");
+                const packageClassAccessorFunction:String = functionAndDebugInfo[0];
 
-                var firstSlash:int = packageClassAccessorFunction.indexOf("/");
-                var constructor:Boolean = firstSlash == -1;
-                var classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
-                var classAndPackageSplit:Array = classAndPackage.split("::");
-                var defaultPackage:Boolean = classAndPackageSplit.length == 1;
+                const firstSlash:int = packageClassAccessorFunction.indexOf("/");
+                const constructor:Boolean = firstSlash == -1;
+                const classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
+                const classAndPackageSplit:Array = classAndPackage.split("::");
+                const defaultPackage:Boolean = classAndPackageSplit.length == 1;
                 var className:String = defaultPackage ? classAndPackageSplit[0].substr(classAndPackageSplit[0].indexOf("at ") + 3) : classAndPackageSplit[1];
 
-                var accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
-                var accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
-                var functionName:String = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+                const accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
+                const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
+                const functionName:String = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
 
                 if(abbreviateClassNames)
                     className = turnClassNameIntoAbbreviation(className);
