@@ -295,12 +295,12 @@ package com.traffic.util.debugging
         }
 
         [Test]
-        public function test_getFunctionsFromStackTrace_with_complex_stack_trace_including_inner_function():void
+        public function test_getFunctionsFromStackTrace_with_complex_stack_trace_including_inner_function_and_getter_and_inner_class():void
         {
             //given
             const testUnrealisticButComplexStack:String = ( <![CDATA[
                     Error
-            at Function/flashx.textLayout.container:ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:501]
+            at Function/StackTraceProcessor.as$41:StackTraceLine/functionName/get/StackTraceProcessor.as$41:accessorAndFunctionToFunction()[C:UsersevolverineAdobe Flash Builder 4.7	raffic-debug-toolssrccom	raffic\utildebuggingStackTraceProcessor.as:157]
             at flashx.textLayout.container::ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:512]
             at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
             at flashx.textLayout.compose::StandardFlowComposer/addController()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:265]
@@ -324,7 +324,7 @@ package com.traffic.util.debugging
                 "SFC.addController",
                 ".attachAllContainers",
                 "CC.setRootElement",
-                ".setRootElement.innerFunctionOfSetRootElement"
+                "STP.STL.get functionName.accessorAndFunctionToFunction"
             ];
 
             //when
@@ -627,7 +627,7 @@ package com.traffic.util.debugging
             var logTarget:StringLogTarget = new StringLogTarget();
             Log.addTarget(logTarget);
 
-            const expectedXMLFragment:XML = <call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function"><call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments"><call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments.sum"><activity time="57:23.452">tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments.sum(9, 11)</activity></call></call></call>;
+            const expectedXMLFragment:XML = <call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function"><call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments"><call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments.sum"><activity time="57:23.452">tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments.sum(9,11)</activity></call></call></call>;
 
             //when
             tdt.setUp(false, false);

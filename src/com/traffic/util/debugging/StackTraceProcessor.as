@@ -71,23 +71,19 @@ package com.traffic.util.debugging {
                 return adjustClassNameBasedOnUserSettings(line.className, abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + line.functionName;
             }
 
-            function excludeEmptyLines(item:*, index:int, array:Array):Boolean
-            {
-                return (item as String).length > 0;
-            }
-
             const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
             clearEmptyLinesAtBothEnds(lines);
             removeErrorName(lines);
 
             var line:StackTraceLine = new StackTraceLine();
-            const functions:Array = lines.map(stackTraceLineToClassDotFunction).filter(excludeEmptyLines);
+            const functions:Array = lines.map(stackTraceLineToClassDotFunction).filter(ArrayUtils.excludeEmptyLines);
             Contract.postcondition(functions != null);
             return functions;
         }
     }
 }
 
+import com.traffic.util.debugging.ArrayUtils;
 import com.traffic.util.debugging.StringUtils;
 
 import mx.utils.StringUtil;
@@ -124,35 +120,57 @@ class StackTraceLine
 
     public function get className():String
     {
+        //inner classes are represented like this:
+        //StackTraceProcessor.as$41:StackTraceLine
+        function parseInnerClassOrPackageAndClassName(innerClassOrPackageAndClass:String):String
+        {
+            const packageClassSeparator:String = isFunctionPrefixed ? ":" : "::";
+            const locationOfSeparator:int = innerClassOrPackageAndClass.indexOf(packageClassSeparator);
+
+            if(locationOfSeparator == -1)
+            {
+                return innerClassOrPackageAndClass;
+            }
+            else
+            {
+                const locationOfDollarSign:int = innerClassOrPackageAndClass.indexOf("$");
+                const isInnerClass:Boolean = locationOfDollarSign != -1;
+                const theClassName:String = innerClassOrPackageAndClass.substr(locationOfSeparator + packageClassSeparator.length);
+                return isInnerClass ? stripCommonFileExtensions(innerClassOrPackageAndClass.substring(0, locationOfDollarSign) + "." + theClassName) : theClassName;
+            }
+        }
+
         if(!_className)
         {
-            var packageClassSeparator:String = "::";
-
             if (isFunctionApplyOrCall)
             {
                 _className = "Function";
             }
             else
             {
-                if (isFunctionPrefixed)
-                {
-                    packageClassSeparator = ":";
-                }
-
                 const firstSlash:int = codeInfoWithoutFunctionEdgeCase.indexOf("/");
-                const constructor:Boolean = firstSlash == -1;
-                const classAndPackage:String = constructor ? codeInfoWithoutFunctionEdgeCase : codeInfoWithoutFunctionEdgeCase.substring(0, firstSlash);
-                const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
-                const defaultPackage:Boolean = classAndPackageSplit.length == 1;
-                _className = defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
+                _className = parseInnerClassOrPackageAndClassName(codeInfoWithoutFunctionEdgeCase.substring(0, firstSlash != -1 ? firstSlash : 0x7fffffff));
             }
         }
 
         return _className;
     }
 
+    private static function stripCommonFileExtensions(innerClassOrPackageAndClass:String):String
+    {
+        return innerClassOrPackageAndClass.replace(".as", "").replace(".mxml", "");
+    }
+
     public function get functionName():String
     {
+        function accessorAndFunctionToFunction(item:*, index:int, array:Array):String
+        {
+            const accessorAndFunction:String = item as String;
+            const accessorInformationEndsAt:int = accessorAndFunction.indexOf(":");
+            const isAccessorPresent:Boolean = accessorInformationEndsAt != -1;
+            return isAccessorPresent ? accessorAndFunction.substr(accessorInformationEndsAt + 1) : accessorAndFunction;
+        }
+
         if(!_functionName)
         {
             if (isFunctionApplyOrCall)
@@ -164,22 +182,36 @@ class StackTraceLine
                 const firstSlash:int = codeInfoWithoutFunctionEdgeCase.indexOf("/");
                 const constructor:Boolean = firstSlash == -1;
                 const accessorAndFunction:String = constructor ? "()" : codeInfoWithoutFunctionEdgeCase.substring(firstSlash + 1);
-                const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
-                _functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+                const accessorClassAndFunctionSplit:Array = accessorAndFunction.split("::");
+                var functionNames:String = accessorClassAndFunctionSplit.length == 1 ? accessorClassAndFunctionSplit[0] : accessorClassAndFunctionSplit[1];
 
-                //inner functions will have their parent function in the name, together with the package again, as such:
-                //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
-                const locationOfColon:int = _functionName.indexOf(":");
-                const innerFunctionPresent:Boolean = locationOfColon != -1;
-                if (innerFunctionPresent)
-                {
-                    const firstFunctionSlash:int = _functionName.indexOf("/");
-                    _functionName = _functionName.substring(0, firstFunctionSlash) + "." + _functionName.substr(locationOfColon + 1);
-                }
+                //inner functions will have their parent function(s) in the name, together with the package again, as such:
+                //- setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement or
+                //- com.traffic.util.debugging:tdtTest/test_location_tracing_with_arguments_in_inner_function_of_inner_function/com.traffic.util.debugging:locationTracingWithTwoArguments/com.traffic.util.debugging:sum
+                _functionName = sanitizeGettersAndSetters(functionNames.split("/").map(accessorAndFunctionToFunction).filter(ArrayUtils.excludeEmptyLines)).join(".");
             }
         }
 
         return _functionName;
+    }
+
+    //getters and setters appear between /, which means they will be processed as separate functions
+    //eg StackTraceProcessor.as$41:StackTraceLine/functionName/get/StackTraceProcessor.as$41:accessorAndFunctionToFunction()
+    private function sanitizeGettersAndSetters(functionNames:Array):Array
+    {
+        function isAnythingButGetOrSet(item:*, index:int = -1, array:Array = null):Boolean
+        {
+            var str:String = item as String;
+            return str != "get" && str != "set";
+        }
+
+        function moveGetAndSetKeywordsToPreviousItem(item:*, index:int, array:Array):String
+        {
+            var nextItem:String = index < array.length ? array[index+1] : null;
+            return isAnythingButGetOrSet(nextItem) ? item : nextItem + " " + item;
+        }
+
+        return functionNames.map(moveGetAndSetKeywordsToPreviousItem).filter(isAnythingButGetOrSet);
     }
 
     //as opposed to the file info part of the stack trace line

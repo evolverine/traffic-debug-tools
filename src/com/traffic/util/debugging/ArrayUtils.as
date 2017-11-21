@@ -30,5 +30,10 @@ package com.traffic.util.debugging
 			
 			return a.slice(0, i);
 		}
+
+		public static function excludeEmptyLines(item:*, index:int, array:Array):Boolean
+    	{
+        	return (item as String).length > 0;
+    	}
 	}
 }
