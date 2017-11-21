@@ -33,7 +33,7 @@ package com.traffic.util.debugging
         private static const FUNCTION_CLASS_PREFIX:String = "Function/";
         private static const FUNCTION_APPLY:String = "apply";
         private static const FUNCTION_CALL:String = "call";
-        private static const AT_STACK_PREFIX:String = "at ";
+        private static const INITIAL_AT_PREFIX:String = "at ";
 
         private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
 		private static const _allInstances:Array = [];
@@ -310,6 +310,8 @@ package com.traffic.util.debugging
 		 */
 		public static function getFunctionsFromStackTrace(stackTrace:String, abbreviateClassNames:Boolean = false, avoidClassNamesWhenIdentical:Boolean = true, excludeLastItemsNo:int = 1):Array
 		{
+            var previousClass:String = "";
+
             function adjustClassNameBasedOnUserSettings(className:String, abbreviateClassNames:Boolean, avoidClassNamesWhenIdentical:Boolean):String
             {
                 if (abbreviateClassNames)
@@ -340,76 +342,96 @@ package com.traffic.util.debugging
             function removeErrorName(stackLines:Array):void
             {
                 //remove error info. E.g. "ReferenceError: Error #1069: Property mx_internal_uid not found on ... and there is no default value."
-                lines.pop();
+                stackLines.pop();
             }
 
             function processStackTraceLine(item:*, index:int, array:Array):void
             {
-                if(lineNo++ >= lines.length - excludeLastItemsNo)
+                function getClassName(packageClassAccessorFunction:String):String
+                {
+                    //both inner functions and function.apply() start with "Function/".
+                    //When this happens for inner functions, simply remove this prefix
+                    const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
+                    const applyOrCall:Boolean = StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_APPLY) || StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_CALL);
+                    if (functionPrefix && applyOrCall)
+                    {
+                        return "Function";
+                    }
+                    else
+                    {
+                        if(functionPrefix)
+                        {
+                            packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
+                            packageClassSeparator = ":";
+                        }
+
+                        const firstSlash:int = packageClassAccessorFunction.indexOf("/");
+                        const constructor:Boolean = firstSlash == -1;
+                        const classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
+                        const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
+                        const defaultPackage:Boolean = classAndPackageSplit.length == 1;
+                        return defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
+                    }
+                }
+
+                function getFunctionName(packageClassAccessorFunction:String):String
+                {
+                    var functionName:String = "";
+
+                    //both inner functions and function.apply() start with "Function/".
+                    //When this happens for inner functions, simply remove this prefix
+                    const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
+                    const applyOrCall:Boolean = StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_APPLY) || StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_CALL);
+                    if (functionPrefix && applyOrCall)
+                    {
+                        functionName = packageClassAccessorFunction.split("::").pop() as String;
+                    }
+                    else
+                    {
+                        if(functionPrefix)
+                        {
+                            packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
+                            packageClassSeparator = ":";
+                        }
+
+                        const firstSlash:int = packageClassAccessorFunction.indexOf("/");
+                        const constructor:Boolean = firstSlash == -1;
+                        const accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
+                        const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
+                        functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+
+                        //inner functions will have their parent function in the name, together with the package again, as such:
+                        //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
+                        const locationOfColon:int = functionName.indexOf(":");
+                        const innerFunctionPresent:Boolean = locationOfColon != -1;
+                        if (innerFunctionPresent)
+                        {
+                            const firstFunctionSlash:int = functionName.indexOf("/");
+                            functionName = functionName.substring(0, firstFunctionSlash) + "." + functionName.substr(locationOfColon + 1);
+                        }
+                    }
+
+                    return functionName;
+                }
+
+                if(index >= array.length - excludeLastItemsNo)
                     return; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 
                 //remove initial "at "
-                var currentLine:String = StringUtil.trim(item as String);
-                if(currentLine.indexOf(AT_STACK_PREFIX) == 0)
-                    currentLine = currentLine.substr(AT_STACK_PREFIX.length);
+                const currentLine:String = StringUtils.trimSubstringLeft(StringUtil.trim(item as String), INITIAL_AT_PREFIX);
 
                 var packageClassSeparator:String = "::";
                 const functionAndDebugInfo:Array = currentLine.split("()");
                 var packageClassAccessorFunction:String = functionAndDebugInfo[0];
-                var functionName:String = "";
-                var className:String = "";
 
-                //both inner functions and function.apply() start with "Function/".
-                //When this happens for inner functions, simply remove this prefix
-                const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
-                const applyOrCall:Boolean = StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_APPLY) || StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_CALL);
-                if (functionPrefix && applyOrCall)
-                {
-                    const parts:Array = packageClassAccessorFunction.split("::");
-                    functionName = parts[parts.length - 1];
-                    className = "Function";
-                }
-                else
-                {
-                    if(functionPrefix)
-                    {
-                        packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
-                        packageClassSeparator = ":";
-                    }
-
-                    const firstSlash:int = packageClassAccessorFunction.indexOf("/");
-                    const constructor:Boolean = firstSlash == -1;
-                    const classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
-                    const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
-                    const defaultPackage:Boolean = classAndPackageSplit.length == 1;
-                    className = defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
-
-                    const accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
-                    const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
-                    functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
-
-                    //inner functions will have their parent function in the name, together with the package again, as such:
-                    //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
-                    const locationOfColon:int = functionName.indexOf(":");
-                    const innerFunctionPresent:Boolean = locationOfColon != -1;
-                    if (innerFunctionPresent)
-                    {
-                        const firstFunctionSlash:int = functionName.indexOf("/");
-                        functionName = functionName.substring(0, firstFunctionSlash) + "." + functionName.substr(locationOfColon + 1);
-                    }
-                }
-
-                functions.push(adjustClassNameBasedOnUserSettings(className, abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + functionName);
+                functions.push(adjustClassNameBasedOnUserSettings(getClassName(packageClassAccessorFunction), abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + getFunctionName(packageClassAccessorFunction));
             }
 
 			var functions:Array = [];
-			var previousClass:String = "";
 			const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
 			
 			clearEmptyLinesAtBothEnds(lines);
             removeErrorName(lines);
-
-            var lineNo:int = 0;
             lines.forEach(processStackTraceLine);
 
             Contract.postcondition(functions != null);
