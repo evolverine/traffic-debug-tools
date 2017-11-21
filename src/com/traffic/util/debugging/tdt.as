@@ -345,10 +345,12 @@ package com.traffic.util.debugging
                 stackLines.pop();
             }
 
-            function processStackTraceLine(item:*, index:int, array:Array):void
+            function stackTraceLineToClassDotFunction(item:*, index:int, array:Array):String
             {
                 function getClassName(packageClassAccessorFunction:String):String
                 {
+                    var packageClassSeparator:String = "::";
+
                     //both inner functions and function.apply() start with "Function/".
                     //When this happens for inner functions, simply remove this prefix
                     const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
@@ -391,7 +393,6 @@ package com.traffic.util.debugging
                         if(functionPrefix)
                         {
                             packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
-                            packageClassSeparator = ":";
                         }
 
                         const firstSlash:int = packageClassAccessorFunction.indexOf("/");
@@ -414,26 +415,29 @@ package com.traffic.util.debugging
                     return functionName;
                 }
 
-                if(index >= array.length - excludeLastItemsNo)
-                    return; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 
-                //remove initial "at "
+                if(index >= array.length - excludeLastItemsNo)
+                    return ""; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
+
+                //remove white space and initial "at "
                 const currentLine:String = StringUtils.trimSubstringLeft(StringUtil.trim(item as String), INITIAL_AT_PREFIX);
 
-                var packageClassSeparator:String = "::";
                 const functionAndDebugInfo:Array = currentLine.split("()");
                 var packageClassAccessorFunction:String = functionAndDebugInfo[0];
 
-                functions.push(adjustClassNameBasedOnUserSettings(getClassName(packageClassAccessorFunction), abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + getFunctionName(packageClassAccessorFunction));
+                return adjustClassNameBasedOnUserSettings(getClassName(packageClassAccessorFunction), abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + getFunctionName(packageClassAccessorFunction);
             }
 
-			var functions:Array = [];
-			const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
-			
-			clearEmptyLinesAtBothEnds(lines);
-            removeErrorName(lines);
-            lines.forEach(processStackTraceLine);
+            function excludeEmptyLines(item:*, index:int, array:Array):Boolean
+            {
+                return (item as String).length > 0;
+            }
 
+            const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
+            clearEmptyLinesAtBothEnds(lines);
+            removeErrorName(lines);
+
+			const functions:Array = lines.map(stackTraceLineToClassDotFunction).filter(excludeEmptyLines);
             Contract.postcondition(functions != null);
 			return functions;
 		}

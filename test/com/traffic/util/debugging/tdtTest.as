@@ -105,10 +105,10 @@ package com.traffic.util.debugging
 				];
 			
 			//when
-			var stackFunctions:Array = tdt.getFunctionsFromStackTrace(testStack, true, true, 1);
+			var allStackFunctionsExceptLast:Array = tdt.getFunctionsFromStackTrace(testStack, true, true, 1);
 
 			//then
-			assertTrue(arraysEqual(expected, stackFunctions));
+			assertTrue(arraysEqual(expected, allStackFunctionsExceptLast));
 		}
 
         [Test]
