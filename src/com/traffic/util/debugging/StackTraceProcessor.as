@@ -100,6 +100,8 @@ class StackTraceLine
 
     private var _originalLine:String;
     private var _packageClassAccessorFunction:String = "";
+    private var _className:String;
+    private var _functionName:String;
 
 
     public function StackTraceLine(line:String)
@@ -109,64 +111,70 @@ class StackTraceLine
 
     public function get className():String
     {
-        var packageClassSeparator:String = "::";
+        if(!_className)
+        {
+            var packageClassSeparator:String = "::";
 
-        if(isFunctionApplyOrCall)
-        {
-            return "Function";
-        }
-        else
-        {
-            var codeInfoWithoutFunction:String = codeInfo;
-            if(isFunctionPrefixed)
+            if (isFunctionApplyOrCall)
             {
-                codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
-                packageClassSeparator = ":";
+                _className = "Function";
             }
+            else
+            {
+                var codeInfoWithoutFunction:String = codeInfo;
+                if (isFunctionPrefixed)
+                {
+                    codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
+                    packageClassSeparator = ":";
+                }
 
-            const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
-            const constructor:Boolean = firstSlash == -1;
-            const classAndPackage:String = constructor ? codeInfoWithoutFunction : codeInfoWithoutFunction.substring(0, firstSlash);
-            const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
-            const defaultPackage:Boolean = classAndPackageSplit.length == 1;
-            return defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
+                const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
+                const constructor:Boolean = firstSlash == -1;
+                const classAndPackage:String = constructor ? codeInfoWithoutFunction : codeInfoWithoutFunction.substring(0, firstSlash);
+                const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
+                const defaultPackage:Boolean = classAndPackageSplit.length == 1;
+                _className = defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
+            }
         }
+
+        return _className;
     }
 
     public function get functionName():String
     {
-        var functionName:String = "";
-
-        if (isFunctionApplyOrCall)
+        if(!_functionName)
         {
-            functionName = codeInfo.split("::").pop() as String;
-        }
-        else
-        {
-            var codeInfoWithoutFunction:String = codeInfo;
-            if(isFunctionPrefixed)
+            if (isFunctionApplyOrCall)
             {
-                codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
+                _functionName = codeInfo.split("::").pop() as String;
             }
-
-            const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
-            const constructor:Boolean = firstSlash == -1;
-            const accessorAndFunction:String = constructor ? "()" : codeInfoWithoutFunction.substring(firstSlash + 1);
-            const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
-            functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
-
-            //inner functions will have their parent function in the name, together with the package again, as such:
-            //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
-            const locationOfColon:int = functionName.indexOf(":");
-            const innerFunctionPresent:Boolean = locationOfColon != -1;
-            if (innerFunctionPresent)
+            else
             {
-                const firstFunctionSlash:int = functionName.indexOf("/");
-                functionName = functionName.substring(0, firstFunctionSlash) + "." + functionName.substr(locationOfColon + 1);
+                var codeInfoWithoutFunction:String = codeInfo;
+                if (isFunctionPrefixed)
+                {
+                    codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
+                }
+
+                const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
+                const constructor:Boolean = firstSlash == -1;
+                const accessorAndFunction:String = constructor ? "()" : codeInfoWithoutFunction.substring(firstSlash + 1);
+                const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
+                _functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+
+                //inner functions will have their parent function in the name, together with the package again, as such:
+                //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
+                const locationOfColon:int = functionName.indexOf(":");
+                const innerFunctionPresent:Boolean = locationOfColon != -1;
+                if (innerFunctionPresent)
+                {
+                    const firstFunctionSlash:int = functionName.indexOf("/");
+                    _functionName = functionName.substring(0, firstFunctionSlash) + "." + functionName.substr(locationOfColon + 1);
+                }
             }
         }
 
-        return functionName;
+        return _functionName;
     }
 
     //as opposed to the file info part of the stack trace line
