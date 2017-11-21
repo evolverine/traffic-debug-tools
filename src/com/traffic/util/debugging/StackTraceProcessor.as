@@ -102,6 +102,7 @@ class StackTraceLine
     private var _packageClassAccessorFunction:String = "";
     private var _className:String;
     private var _functionName:String;
+    private var _codeInfoWithoutFunctionEdgeCase:String;
 
 
     public function StackTraceLine(line:String)
@@ -121,16 +122,14 @@ class StackTraceLine
             }
             else
             {
-                var codeInfoWithoutFunction:String = codeInfo;
                 if (isFunctionPrefixed)
                 {
-                    codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
                     packageClassSeparator = ":";
                 }
 
-                const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
+                const firstSlash:int = codeInfoWithoutFunctionEdgeCase.indexOf("/");
                 const constructor:Boolean = firstSlash == -1;
-                const classAndPackage:String = constructor ? codeInfoWithoutFunction : codeInfoWithoutFunction.substring(0, firstSlash);
+                const classAndPackage:String = constructor ? codeInfoWithoutFunctionEdgeCase : codeInfoWithoutFunctionEdgeCase.substring(0, firstSlash);
                 const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
                 const defaultPackage:Boolean = classAndPackageSplit.length == 1;
                 _className = defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
@@ -150,26 +149,20 @@ class StackTraceLine
             }
             else
             {
-                var codeInfoWithoutFunction:String = codeInfo;
-                if (isFunctionPrefixed)
-                {
-                    codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
-                }
-
-                const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
+                const firstSlash:int = codeInfoWithoutFunctionEdgeCase.indexOf("/");
                 const constructor:Boolean = firstSlash == -1;
-                const accessorAndFunction:String = constructor ? "()" : codeInfoWithoutFunction.substring(firstSlash + 1);
+                const accessorAndFunction:String = constructor ? "()" : codeInfoWithoutFunctionEdgeCase.substring(firstSlash + 1);
                 const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
                 _functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
 
                 //inner functions will have their parent function in the name, together with the package again, as such:
                 //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
-                const locationOfColon:int = functionName.indexOf(":");
+                const locationOfColon:int = _functionName.indexOf(":");
                 const innerFunctionPresent:Boolean = locationOfColon != -1;
                 if (innerFunctionPresent)
                 {
-                    const firstFunctionSlash:int = functionName.indexOf("/");
-                    _functionName = functionName.substring(0, firstFunctionSlash) + "." + functionName.substr(locationOfColon + 1);
+                    const firstFunctionSlash:int = _functionName.indexOf("/");
+                    _functionName = _functionName.substring(0, firstFunctionSlash) + "." + _functionName.substr(locationOfColon + 1);
                 }
             }
         }
@@ -189,6 +182,21 @@ class StackTraceLine
         }
 
         return _packageClassAccessorFunction;
+    }
+
+    public function get codeInfoWithoutFunctionEdgeCase():String
+    {
+        if(isFunctionPrefixed)
+        {
+            if (!_codeInfoWithoutFunctionEdgeCase)
+            {
+                _codeInfoWithoutFunctionEdgeCase = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
+            }
+
+            return _codeInfoWithoutFunctionEdgeCase;
+        }
+
+        return codeInfo;
     }
 
     //eg. at Function/flashx.textLayout.container:ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:501]
