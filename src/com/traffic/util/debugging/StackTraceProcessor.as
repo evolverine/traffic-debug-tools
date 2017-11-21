@@ -26,13 +26,7 @@ package com.traffic.util.debugging {
 
             function adjustClassNameBasedOnUserSettings(className:String, abbreviateClassNames:Boolean, avoidClassNamesWhenIdentical:Boolean):String
             {
-                function turnClassNameIntoAbbreviation(className:String):String
-                {
-                    return className.replace(/[a-z_]/g, "");
-                }
-
-                if (abbreviateClassNames)
-                    className = turnClassNameIntoAbbreviation(className);
+                className = abbreviateClassNames ? StringUtils.toAbbreviation(className) : className;
 
                 if (avoidClassNamesWhenIdentical)
                 {
@@ -42,6 +36,7 @@ package com.traffic.util.debugging {
 
                     previousClass = currentClass;
                 }
+
                 return className;
             }
 

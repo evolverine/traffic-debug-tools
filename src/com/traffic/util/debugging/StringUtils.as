@@ -16,5 +16,10 @@ package com.traffic.util.debugging
 		{
 			return startsWith(str, substring) ? str.substr(substring.length) : str;
 		}
+
+		public static function toAbbreviation(str:String):String
+		{
+            return str.replace(/[a-z_]/g, "");
+		}
 	}
 }
