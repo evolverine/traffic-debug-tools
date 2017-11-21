@@ -67,7 +67,7 @@ package com.traffic.util.debugging {
                 if(index >= array.length - excludeLastItemsNo)
                     return ""; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 
-                var line:StackTraceLine = new StackTraceLine(item as String);
+                line.originalLine = item as String;
                 return adjustClassNameBasedOnUserSettings(line.className, abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + line.functionName;
             }
 
@@ -80,6 +80,7 @@ package com.traffic.util.debugging {
             clearEmptyLinesAtBothEnds(lines);
             removeErrorName(lines);
 
+            var line:StackTraceLine = new StackTraceLine();
             const functions:Array = lines.map(stackTraceLineToClassDotFunction).filter(excludeEmptyLines);
             Contract.postcondition(functions != null);
             return functions;
@@ -99,15 +100,26 @@ class StackTraceLine
     private static const FUNCTION_CALL:String = "call";
 
     private var _originalLine:String;
-    private var _packageClassAccessorFunction:String = "";
+    private var _codeInfo:String = "";
     private var _className:String;
     private var _functionName:String;
     private var _codeInfoWithoutFunctionEdgeCase:String;
 
-
-    public function StackTraceLine(line:String)
+    public function set originalLine(value:String):void
     {
-        _originalLine = line;
+        if(_originalLine != value)
+        {
+            _originalLine = value;
+            reset();
+        }
+    }
+
+    private function reset():void
+    {
+        _codeInfo = "";
+        _codeInfoWithoutFunctionEdgeCase = "";
+        _className = "";
+        _functionName = "";
     }
 
     public function get className():String
@@ -174,14 +186,14 @@ class StackTraceLine
     //eg. at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
     public function get codeInfo():String
     {
-        if(!_packageClassAccessorFunction)
+        if(!_codeInfo)
         {
             //remove white space and the initial "at ", then split at "()", where the code info part ends and file info begins
             const functionAndDebugInfo:Array = StringUtils.trimSubstringLeft(StringUtil.trim(_originalLine), INITIAL_AT_PREFIX).split("()");
-            _packageClassAccessorFunction = functionAndDebugInfo[0];
+            _codeInfo = functionAndDebugInfo[0];
         }
 
-        return _packageClassAccessorFunction;
+        return _codeInfo;
     }
 
     public function get codeInfoWithoutFunctionEdgeCase():String
