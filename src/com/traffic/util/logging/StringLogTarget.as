@@ -3,7 +3,7 @@
  * see LICENSE.
  */
 
-package com.traffic.util.debugging {
+package com.traffic.util.logging {
     import mx.logging.AbstractTarget;
     import mx.logging.LogEvent;
 
