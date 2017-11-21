@@ -111,18 +111,14 @@ class StackTraceLine
     {
         var packageClassSeparator:String = "::";
 
-        //both inner functions and function.apply() start with "Function/".
-        //When this happens for inner functions, simply remove this prefix
-        const functionPrefix:Boolean = codeInfo.indexOf(FUNCTION_CLASS_PREFIX) == 0;
-        const applyOrCall:Boolean = StringUtils.endsWith(codeInfo, FUNCTION_APPLY) || StringUtils.endsWith(codeInfo, FUNCTION_CALL);
-        if (functionPrefix && applyOrCall)
+        if(isFunctionApplyOrCall)
         {
             return "Function";
         }
         else
         {
             var codeInfoWithoutFunction:String = codeInfo;
-            if(functionPrefix)
+            if(isFunctionPrefixed)
             {
                 codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
                 packageClassSeparator = ":";
@@ -141,18 +137,14 @@ class StackTraceLine
     {
         var functionName:String = "";
 
-        //both inner functions and function.apply() start with "Function/".
-        //When this happens for inner functions, simply remove this prefix
-        const functionPrefix:Boolean = codeInfo.indexOf(FUNCTION_CLASS_PREFIX) == 0;
-        const applyOrCall:Boolean = StringUtils.endsWith(codeInfo, FUNCTION_APPLY) || StringUtils.endsWith(codeInfo, FUNCTION_CALL);
-        if (functionPrefix && applyOrCall)
+        if (isFunctionApplyOrCall)
         {
             functionName = codeInfo.split("::").pop() as String;
         }
         else
         {
             var codeInfoWithoutFunction:String = codeInfo;
-            if(functionPrefix)
+            if(isFunctionPrefixed)
             {
                 codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
             }
@@ -189,5 +181,19 @@ class StackTraceLine
         }
 
         return _packageClassAccessorFunction;
+    }
+
+    //eg. at Function/flashx.textLayout.container:ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:501]
+    public function get isFunctionApplyOrCall():Boolean
+    {
+        //both inner functions and function.apply() start with "Function/".
+        //When this happens for inner functions, simply remove this prefix
+        const endsWithApplyOrCall:Boolean = StringUtils.endsWith(codeInfo, FUNCTION_APPLY) || StringUtils.endsWith(codeInfo, FUNCTION_CALL);
+        return endsWithApplyOrCall && isFunctionPrefixed;
+    }
+
+    public function get isFunctionPrefixed():Boolean
+    {
+        return StringUtils.startsWith(codeInfo, FUNCTION_CLASS_PREFIX);
     }
 }
