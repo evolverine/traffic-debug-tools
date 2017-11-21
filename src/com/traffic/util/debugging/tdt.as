@@ -64,6 +64,14 @@ package com.traffic.util.debugging
 			_whenToPrint = whenToPrint;
 		}
 
+        public static function debugLocation(args:Array = null, printImmediately:Boolean = false):void
+        {
+            const stackTrace:String = new Error().getStackTrace();
+            const stackFunctions:Array = getFunctionsFromStackTrace(stackTrace, _abbreviateClassNames, _skipClassNamesWhenIdentical);
+
+            debug(stackFunctions[stackFunctions.length - 1] + "(" + (args ? args.join(",") : "") + ")", stackTrace, printImmediately);
+        }
+
 		public static function debug(activity:String = "", stackTrace:String = "", printImmediately:Boolean = false):void
 		{
 			if(_isDisabled)
