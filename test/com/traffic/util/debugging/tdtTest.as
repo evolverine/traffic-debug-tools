@@ -34,6 +34,50 @@ package com.traffic.util.debugging
             tdt.clearActivities();
         }
 
+        [Test]
+        public function test_clearActivities():void
+        {
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            //then
+            assertEquals(0, logTarget.log.length);
+
+            //when
+            tdt.debug();
+            tdt.printActivityStreams(false);
+
+            //then
+            assertTrue(atLeastOneActivityInXML(new XML(logTarget.log)));
+
+            //given
+            logTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            //then
+            assertEquals(0, logTarget.log.length);
+
+            //when
+            tdt.debug();
+            tdt.printActivityStreams(false);
+
+            //then
+            assertTrue(atLeastOneActivityInXML(new XML(logTarget.log)));
+
+            //given
+            logTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            //when
+            tdt.clearActivities();
+            tdt.printActivityStreams(true);
+
+            //then
+            assertActualAndExpectedXMLsMatch(new XML(logTarget.log), <debug/>);
+            assertFalse(atLeastOneActivityInXML(new XML(logTarget.log)));
+        }
+
 		[Test]
 		public function test_getFunctionsFromStackTrace_with_simple_stack_trace():void
 		{
