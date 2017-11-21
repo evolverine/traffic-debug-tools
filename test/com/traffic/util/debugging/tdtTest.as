@@ -8,7 +8,6 @@ package com.traffic.util.debugging
     import com.traffic.util.logging.StringLogTarget;
 
     import flash.events.Event;
-    import flash.xml.XMLNode;
 
     import mx.logging.Log;
 
@@ -604,6 +603,35 @@ package com.traffic.util.debugging
             //when
             tdt.setUp(false, false);
             locationTracingWithTwoArguments(3, 4);
+            tdt.printActivityStreams(true);
+
+            //then
+            assertFirstActivitiesInIdenticalSubTrees(new XML(logTarget.log), expectedXMLFragment);
+        }
+
+        [Test]
+        public function test_location_tracing_with_arguments_in_inner_function_of_inner_function():void
+        {
+            function locationTracingWithTwoArguments(a:int = 1, b:int = 2):void
+            {
+                function sum(a:int, b:int):int
+                {
+                    tdt.debugLocation(arguments);
+                    return a + b;
+                }
+
+                sum(a, b);
+            }
+
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            const expectedXMLFragment:XML = <call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function"><call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments"><call name="tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments.sum"><activity time="57:23.452">tdtTest.test_location_tracing_with_arguments_in_inner_function_of_inner_function.locationTracingWithTwoArguments.sum(9, 11)</activity></call></call></call>;
+
+            //when
+            tdt.setUp(false, false);
+            locationTracingWithTwoArguments(9, 11);
             tdt.printActivityStreams(true);
 
             //then
