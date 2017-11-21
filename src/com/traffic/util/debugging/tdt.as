@@ -326,33 +326,35 @@ package com.traffic.util.debugging
                 return className;
             }
 
-			var functions:Array = [];
-			var previousClass:String = "";
-			var lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
-			
-			if(lines.length)
-			{
-				if(!StringUtil.trim(lines[0]))
-					lines.shift();
-				if(!StringUtil.trim(lines[lines.length - 1]))
-					lines.pop();
-			}
+            function clearEmptyLinesAtBothEnds(lines:Array):void
+            {
+                if(lines.length)
+                {
+                    if(!StringUtil.trim(lines[0]))
+                        lines.shift();
+                    if(!StringUtil.trim(lines[lines.length - 1]))
+                        lines.pop();
+                }
+            }
 
-            //remove error info. E.g. "ReferenceError: Error #1069: Property mx_internal_uid not found on ... and there is no default value."
-            lines.pop();
+            function removeErrorName(stackLines:Array):void
+            {
+                //remove error info. E.g. "ReferenceError: Error #1069: Property mx_internal_uid not found on ... and there is no default value."
+                lines.pop();
+            }
 
-			for (var i:int = 0; i < lines.length; i++)
-			{
-				if(i >= lines.length - excludeLastItemsNo)
-					break; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
+            function processStackTraceLine(item:*, index:int, array:Array):void
+            {
+                if(lineNo++ >= lines.length - excludeLastItemsNo)
+                    return; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
 
                 //remove initial "at "
-                var currentLine:String = StringUtil.trim(lines[i]);
+                var currentLine:String = StringUtil.trim(item as String);
                 if(currentLine.indexOf(AT_STACK_PREFIX) == 0)
                     currentLine = currentLine.substr(AT_STACK_PREFIX.length);
 
                 var packageClassSeparator:String = "::";
-				const functionAndDebugInfo:Array = currentLine.split("()");
+                const functionAndDebugInfo:Array = currentLine.split("()");
                 var packageClassAccessorFunction:String = functionAndDebugInfo[0];
                 var functionName:String = "";
                 var className:String = "";
@@ -398,7 +400,17 @@ package com.traffic.util.debugging
                 }
 
                 functions.push(adjustClassNameBasedOnUserSettings(className, abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + functionName);
-			}
+            }
+
+			var functions:Array = [];
+			var previousClass:String = "";
+			const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
+			
+			clearEmptyLinesAtBothEnds(lines);
+            removeErrorName(lines);
+
+            var lineNo:int = 0;
+            lines.forEach(processStackTraceLine);
 
             Contract.postcondition(functions != null);
 			return functions;
