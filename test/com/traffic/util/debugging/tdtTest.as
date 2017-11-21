@@ -252,6 +252,46 @@ package com.traffic.util.debugging
         }
 
         [Test]
+        public function test_getFunctionsFromStackTrace_with_complex_stack_trace_including_inner_function():void
+        {
+            //given
+            const testUnrealisticButComplexStack:String = ( <![CDATA[
+                    Error
+            at Function/flashx.textLayout.container:ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:501]
+            at flashx.textLayout.container::ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:512]
+            at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
+            at flashx.textLayout.compose::StandardFlowComposer/addController()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:265]
+            at flashx.textLayout.container::TextContainerManager/http://ns.adobe.com/textLayout/internal/2008::convertToTextFlowWithComposer()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/container/TextContainerManager.as:1663]
+            at spark.components::RichEditableText/updateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/spark/src/spark/components/RichEditableText.as:2948]
+            at mx.core::UIComponent/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/core/UIComponent.as:9531]
+            at DeleteTextMemento()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/edit/ModelEdit.as:255]
+            at mx.managers::LayoutManager/validateDisplayList()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:744]
+            at mx.managers::LayoutManager/doPhasedInstantiation()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:809]
+            at mx.managers::LayoutManager/doPhasedInstantiationCallback()[/Users/aharui/release4.13.0/frameworks/projects/framework/src/mx/managers/LayoutManager.as:1188]
+        ]]> ).toString();
+
+            const expected:Array = [
+                "LM.doPhasedInstantiationCallback",
+                ".doPhasedInstantiation",
+                ".validateDisplayList",
+                "DTM.()",
+                "UIC.validateDisplayList",
+                "RET.updateDisplayList",
+                "TCM.convertToTextFlowWithComposer",
+                "SFC.addController",
+                ".attachAllContainers",
+                "CC.setRootElement",
+                ".setRootElement.innerFunctionOfSetRootElement"
+            ];
+
+            //when
+            var actual:Array = tdt.getFunctionsFromStackTrace(testUnrealisticButComplexStack, true, true, 0);
+
+            //then
+            assertTrue(arraysEqual(actual, expected));
+        }
+
+        [Test]
         public function test_xml_log_for_two_identical_stack_traces_should_include_functions_only_once():void
         {
             //given
@@ -487,6 +527,46 @@ package com.traffic.util.debugging
         }
 
         [Test]
+        public function test_location_tracing():void
+        {
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            const expectedXMLFragment:XML = <call name="T.test_location_tracing"><activity time="57:23.452">T.test_location_tracing()</activity></call>;
+
+            //when
+            tdt.debugLocation(arguments);
+            tdt.printActivityStreams(true);
+
+            //then
+            assertFirstActivitiesInIdenticalSubTrees(new XML(logTarget.log), expectedXMLFragment);
+        }
+
+        [Test]
+        public function test_location_tracing_with_arguments():void
+        {
+            function locationTracingWithTwoArguments(a:int = 1, b:int = 2):void
+            {
+                tdt.debugLocation(arguments);
+            }
+
+            //given
+            var logTarget:StringLogTarget = new StringLogTarget();
+            Log.addTarget(logTarget);
+
+            const expectedXMLFragment:XML = <call name="tdtTest.test_location_tracing_with_arguments"><call name="tdtTest.test_location_tracing_with_arguments.locationTracingWithTwoArguments"><activity time="57:23.452">tdtTest.test_location_tracing_with_arguments.locationTracingWithTwoArguments(3,4)</activity></call></call>;
+
+            //when
+            tdt.setUp(false, false);
+            locationTracingWithTwoArguments(3, 4);
+            tdt.printActivityStreams(true);
+
+            //then
+            assertFirstActivitiesInIdenticalSubTrees(new XML(logTarget.log), expectedXMLFragment);
+        }
+
+        [Test]
         public function test_unique_instance_tracking():void
         {
             //given
@@ -619,6 +699,28 @@ package com.traffic.util.debugging
             assertThat(undefined === tdt.getValue("nonexistent"));
         }
 
+
+
+        //returns true if the first activity of the actual fragment, is identical to (except for the time attribute)
+        //and also surrounded by exactly the same parents, siblings and children as the first one in the expected fragment
+        private static function assertFirstActivitiesInIdenticalSubTrees(actual:XML, expectedFragment:XML):void
+        {
+            const expectedXMLString:String = removeWhiteSpaceBetweenTags(removeActivityTimesFromTraceXML(expectedFragment.toString()));
+            const actualXMLString:String = removeWhiteSpaceBetweenTags(removeActivityTimesFromTraceXML(actual.toString()));
+
+            assertThat("Expected XML not found in actual XML. Expected: \n" + expectedXMLString + "\n.\n.\n. Actual: \n" + actualXMLString,
+                    actualXMLString.indexOf(expectedXMLString) != -1);
+        }
+
+        private static function removeActivityTimesFromTraceXML(traceXML:String):String
+        {
+            return traceXML.replace(/<activity time=\"[0-9\.\:]+\"/gi, "<activity");
+        }
+
+        private static function removeWhiteSpaceBetweenTags(xmlString:String):String
+        {
+            return xmlString.replace(/\>[\s]+\</gi, "><");
+        }
 
         private static function atLeastOneActivityInXML(actual:XML):Boolean
         {

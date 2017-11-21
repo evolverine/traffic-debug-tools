@@ -30,6 +30,11 @@ package com.traffic.util.debugging
 
 		public static const FORMAT_XML:String = "format_XML";
 
+        private static const FUNCTION_CLASS_PREFIX:String = "Function/";
+        private static const FUNCTION_APPLY:String = "apply";
+        private static const FUNCTION_CALL:String = "call";
+        private static const AT_STACK_PREFIX:String = "at ";
+
         private static const _eventDispatcher:EventDispatcher = new EventDispatcher(null);
 		private static const _allInstances:Array = [];
 
@@ -280,9 +285,10 @@ package com.traffic.util.debugging
         }
 
 
-		/**
+        /**
 		 * E.g.:
          Error
+         at Function/flashx.textLayout.container:ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:501]
          at flashx.textLayout.container::ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:512]
          at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
          at flashx.textLayout.compose::StandardFlowComposer/addController()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:265]
@@ -296,6 +302,22 @@ package com.traffic.util.debugging
 		 */
 		public static function getFunctionsFromStackTrace(stackTrace:String, abbreviateClassNames:Boolean = false, avoidClassNamesWhenIdentical:Boolean = true, excludeLastItemsNo:int = 1):Array
 		{
+            function adjustClassNameBasedOnUserSettings(className:String, abbreviateClassNames:Boolean, avoidClassNamesWhenIdentical:Boolean):String
+            {
+                if (abbreviateClassNames)
+                    className = turnClassNameIntoAbbreviation(className);
+
+                if (avoidClassNamesWhenIdentical)
+                {
+                    var currentClass:String = className;
+                    if (previousClass == currentClass)
+                        className = "";
+
+                    previousClass = currentClass;
+                }
+                return className;
+            }
+
 			var functions:Array = [];
 			var previousClass:String = "";
 			var lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
@@ -315,42 +337,66 @@ package com.traffic.util.debugging
 			{
 				if(i >= lines.length - excludeLastItemsNo)
 					break; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
-				
-				const functionAndDebugInfo:Array = lines[i].split("()");
-                const packageClassAccessorFunction:String = functionAndDebugInfo[0];
 
-                const firstSlash:int = packageClassAccessorFunction.indexOf("/");
-                const constructor:Boolean = firstSlash == -1;
-                const classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
-                const classAndPackageSplit:Array = classAndPackage.split("::");
-                const defaultPackage:Boolean = classAndPackageSplit.length == 1;
-                var className:String = defaultPackage ? classAndPackageSplit[0].substr(classAndPackageSplit[0].indexOf("at ") + 3) : classAndPackageSplit[1];
+                //remove initial "at "
+                var currentLine:String = StringUtil.trim(lines[i]);
+                if(currentLine.indexOf(AT_STACK_PREFIX) == 0)
+                    currentLine = currentLine.substr(AT_STACK_PREFIX.length);
 
-                const accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
-                const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
-                const functionName:String = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+                var packageClassSeparator:String = "::";
+				const functionAndDebugInfo:Array = currentLine.split("()");
+                var packageClassAccessorFunction:String = functionAndDebugInfo[0];
+                var functionName:String = "";
+                var className:String = "";
 
-                if(abbreviateClassNames)
-                    className = turnClassNameIntoAbbreviation(className);
-
-                if(avoidClassNamesWhenIdentical)
+                //both inner functions and function.apply() start with "Function/".
+                //When this happens for inner functions, simply remove this prefix
+                const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
+                const applyOrCall:Boolean = StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_APPLY) || StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_CALL);
+                if (functionPrefix && applyOrCall)
                 {
-                    var currentClass:String = className;
-                    if(previousClass == currentClass)
-                        className = "";
+                    const parts:Array = packageClassAccessorFunction.split("::");
+                    functionName = parts[parts.length - 1];
+                    className = "Function";
+                }
+                else
+                {
+                    if(functionPrefix)
+                    {
+                        packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
+                        packageClassSeparator = ":";
+                    }
 
-                    previousClass = currentClass;
+                    const firstSlash:int = packageClassAccessorFunction.indexOf("/");
+                    const constructor:Boolean = firstSlash == -1;
+                    const classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
+                    const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
+                    const defaultPackage:Boolean = classAndPackageSplit.length == 1;
+                    className = defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
+
+                    const accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
+                    const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
+                    functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
+
+                    //inner functions will have their parent function in the name, together with the package again, as such:
+                    //setRootElement/flashx.textLayout.container:innerFunctionOfSetRootElement()
+                    const locationOfColon:int = functionName.indexOf(":");
+                    const innerFunctionPresent:Boolean = locationOfColon != -1;
+                    if (innerFunctionPresent)
+                    {
+                        const firstFunctionSlash:int = functionName.indexOf("/");
+                        functionName = functionName.substring(0, firstFunctionSlash) + "." + functionName.substr(locationOfColon + 1);
+                    }
                 }
 
-                functions.push(className + "." + functionName);
+                functions.push(adjustClassNameBasedOnUserSettings(className, abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + functionName);
 			}
-			
-			Contract.postcondition(functions != null);
+
+            Contract.postcondition(functions != null);
 			return functions;
 		}
 
-
-		public static function turnClassNameIntoAbbreviation(className:String):String
+        public static function turnClassNameIntoAbbreviation(className:String):String
 		{
 			return className.replace(/[a-z_]/g, "");
 		}
