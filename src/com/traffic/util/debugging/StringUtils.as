@@ -1,22 +1,20 @@
 package com.traffic.util.debugging
 {
-	import flash.text.TextField;
-	
-	import flashx.textLayout.conversion.ConversionType;
-	import flashx.textLayout.conversion.TextConverter;
-	import flashx.textLayout.elements.TextFlow;
-	
-	public class StringUtils
+    public class StringUtils
 	{
-		public static function repeatString(str:String, times:int):String
+		public static function endsWith(str:String, endsWith:String):Boolean
 		{
-			var newString:String = "";
-			while(--times >= 0)
-			{
-				newString += str;
-			}
-			
-			return newString;
+			return str.indexOf(endsWith) == str.length - endsWith.length;
+		}
+
+		public static function startsWith(str:String, startsWith:String):Boolean
+		{
+			return str.indexOf(startsWith) == 0;
+		}
+
+		public static function trimSubstringLeft(str:String, substring:String):String
+		{
+			return startsWith(str, substring) ? str.substr(substring.length) : str;
 		}
 	}
 }
