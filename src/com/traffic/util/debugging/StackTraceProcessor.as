@@ -99,18 +99,12 @@ class StackTraceLine
     private static const FUNCTION_CALL:String = "call";
 
     private var _originalLine:String;
-    private var packageClassAccessorFunction:String = "";
+    private var _packageClassAccessorFunction:String = "";
 
 
     public function StackTraceLine(line:String)
     {
         _originalLine = line;
-
-        //remove white space and initial "at "
-        const currentLine:String = StringUtils.trimSubstringLeft(StringUtil.trim(_originalLine), INITIAL_AT_PREFIX);
-
-        const functionAndDebugInfo:Array = currentLine.split("()");
-        packageClassAccessorFunction = functionAndDebugInfo[0];
     }
 
     public function get className():String
@@ -119,23 +113,24 @@ class StackTraceLine
 
         //both inner functions and function.apply() start with "Function/".
         //When this happens for inner functions, simply remove this prefix
-        const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
-        const applyOrCall:Boolean = StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_APPLY) || StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_CALL);
+        const functionPrefix:Boolean = codeInfo.indexOf(FUNCTION_CLASS_PREFIX) == 0;
+        const applyOrCall:Boolean = StringUtils.endsWith(codeInfo, FUNCTION_APPLY) || StringUtils.endsWith(codeInfo, FUNCTION_CALL);
         if (functionPrefix && applyOrCall)
         {
             return "Function";
         }
         else
         {
+            var codeInfoWithoutFunction:String = codeInfo;
             if(functionPrefix)
             {
-                packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
+                codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
                 packageClassSeparator = ":";
             }
 
-            const firstSlash:int = packageClassAccessorFunction.indexOf("/");
+            const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
             const constructor:Boolean = firstSlash == -1;
-            const classAndPackage:String = constructor ? packageClassAccessorFunction : packageClassAccessorFunction.substring(0, firstSlash);
+            const classAndPackage:String = constructor ? codeInfoWithoutFunction : codeInfoWithoutFunction.substring(0, firstSlash);
             const classAndPackageSplit:Array = classAndPackage.split(packageClassSeparator);
             const defaultPackage:Boolean = classAndPackageSplit.length == 1;
             return defaultPackage ? classAndPackageSplit[0] : classAndPackageSplit[1];
@@ -148,22 +143,23 @@ class StackTraceLine
 
         //both inner functions and function.apply() start with "Function/".
         //When this happens for inner functions, simply remove this prefix
-        const functionPrefix:Boolean = packageClassAccessorFunction.indexOf(FUNCTION_CLASS_PREFIX) == 0;
-        const applyOrCall:Boolean = StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_APPLY) || StringUtils.endsWith(packageClassAccessorFunction, FUNCTION_CALL);
+        const functionPrefix:Boolean = codeInfo.indexOf(FUNCTION_CLASS_PREFIX) == 0;
+        const applyOrCall:Boolean = StringUtils.endsWith(codeInfo, FUNCTION_APPLY) || StringUtils.endsWith(codeInfo, FUNCTION_CALL);
         if (functionPrefix && applyOrCall)
         {
-            functionName = packageClassAccessorFunction.split("::").pop() as String;
+            functionName = codeInfo.split("::").pop() as String;
         }
         else
         {
+            var codeInfoWithoutFunction:String = codeInfo;
             if(functionPrefix)
             {
-                packageClassAccessorFunction = StringUtils.trimSubstringLeft(packageClassAccessorFunction, FUNCTION_CLASS_PREFIX);
+                codeInfoWithoutFunction = StringUtils.trimSubstringLeft(codeInfo, FUNCTION_CLASS_PREFIX);
             }
 
-            const firstSlash:int = packageClassAccessorFunction.indexOf("/");
+            const firstSlash:int = codeInfoWithoutFunction.indexOf("/");
             const constructor:Boolean = firstSlash == -1;
-            const accessorAndFunction:String = constructor ? "()" : packageClassAccessorFunction.substring(firstSlash + 1);
+            const accessorAndFunction:String = constructor ? "()" : codeInfoWithoutFunction.substring(firstSlash + 1);
             const accessorAndFunctionSplit:Array = accessorAndFunction.split("::");
             functionName = accessorAndFunctionSplit.length == 1 ? accessorAndFunctionSplit[0] : accessorAndFunctionSplit[1];
 
@@ -179,5 +175,19 @@ class StackTraceLine
         }
 
         return functionName;
+    }
+
+    //as opposed to the file info part of the stack trace line
+    //eg. at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
+    public function get codeInfo():String
+    {
+        if(!_packageClassAccessorFunction)
+        {
+            //remove white space and the initial "at ", then split at "()", where the code info part ends and file info begins
+            const functionAndDebugInfo:Array = StringUtils.trimSubstringLeft(StringUtil.trim(_originalLine), INITIAL_AT_PREFIX).split("()");
+            _packageClassAccessorFunction = functionAndDebugInfo[0];
+        }
+
+        return _packageClassAccessorFunction;
     }
 }
