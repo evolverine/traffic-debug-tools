@@ -300,7 +300,9 @@ package com.traffic.util.debugging
             //given
             const testUnrealisticButComplexStack:String = ( <![CDATA[
                     Error
+            at Function/StackTraceProcessor.as$41:StackTraceLine/private:testSetter/set/StackTraceProcessor.as$41:debugit()[C:UsersevolverineAdobe Flash Builder 4.7	raffic-debug-toolssrccom	raffic\utildebuggingStackTraceProcessor.as:270]
             at Function/StackTraceProcessor.as$41:StackTraceLine/functionName/get/StackTraceProcessor.as$41:accessorAndFunctionToFunction()[C:UsersevolverineAdobe Flash Builder 4.7	raffic-debug-toolssrccom	raffic\utildebuggingStackTraceProcessor.as:157]
+            at Function/com.traffic.util.debugging:StackTraceProcessor/private:testSetter/set/com.traffic.util.debugging:debugit()[C:UsersevolverineAdobe Flash Builder 4.7	raffic-debug-toolssrccom	raffic\utildebuggingStackTraceProcessor.as:90]
             at flashx.textLayout.container::ContainerController/http://ns.adobe.com/textLayout/internal/2008::setRootElement()[C:\Users\evolverine\Adobe Flash Builder 4.7\TFC-10695\src\flashx\textLayout\container\ContainerController.as:512]
             at flashx.textLayout.compose::StandardFlowComposer/http://ns.adobe.com/textLayout/internal/2008::attachAllContainers()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:208]
             at flashx.textLayout.compose::StandardFlowComposer/addController()[/Users/aharui/git/flex/master/flex-tlf/textLayout/src/flashx/textLayout/compose/StandardFlowComposer.as:265]
@@ -324,7 +326,9 @@ package com.traffic.util.debugging
                 "SFC.addController",
                 ".attachAllContainers",
                 "CC.setRootElement",
-                "STP.STL.get functionName.accessorAndFunctionToFunction"
+                "STP.set testSetter.debugit",
+                "STP.STL.get functionName.accessorAndFunctionToFunction",
+                ".set testSetter.debugit"
             ];
 
             //when
