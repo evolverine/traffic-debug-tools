@@ -45,7 +45,7 @@ package com.traffic.util.debugging {
                 return className;
             }
 
-            function clearEmptyLinesAtBothEnds(lines:Array):void
+            function clearEmptyLinesAtBothEnds(lines:Array):Array
             {
                 if(lines.length)
                 {
@@ -54,29 +54,30 @@ package com.traffic.util.debugging {
                     if(!StringUtil.trim(lines[lines.length - 1]))
                         lines.pop();
                 }
+
+                return lines;
             }
 
-            function removeErrorName(stackLines:Array):void
+            function removeErrorName(stackLines:Array):Array
             {
                 //remove error info. E.g. "ReferenceError: Error #1069: Property mx_internal_uid not found on ... and there is no default value."
                 stackLines.pop();
+                return lines;
             }
 
             function stackTraceLineToClassDotFunction(item:*, index:int, array:Array):String
             {
                 if(index >= array.length - excludeLastItemsNo)
-                    return ""; //we don't print the last function (usually in this class), nor the caller (when it's centralized)
+                    return ""; //we don't print the last function (because it's usually in this class), nor the caller (when it's centralized)
 
                 line.originalLine = item as String;
                 return adjustClassNameBasedOnUserSettings(line.className, abbreviateClassNames, avoidClassNamesWhenIdentical) + "." + line.functionName;
             }
 
-            const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
-            clearEmptyLinesAtBothEnds(lines);
-            removeErrorName(lines);
-
             var line:StackTraceLine = new StackTraceLine();
-            const functions:Array = lines.map(stackTraceLineToClassDotFunction).filter(ArrayUtils.excludeEmptyLines);
+            const lines:Array = stackTrace ? stackTrace.split("\n").reverse() : [];
+            const functions:Array = removeErrorName(clearEmptyLinesAtBothEnds(lines)).map(stackTraceLineToClassDotFunction).filter(ArrayUtils.excludeEmptyLines);
+
             Contract.postcondition(functions != null);
             return functions;
         }
@@ -221,8 +222,7 @@ class StackTraceLine
         if(!_codeInfo)
         {
             //remove white space and the initial "at ", then split at "()", where the code info part ends and file info begins
-            const functionAndDebugInfo:Array = StringUtils.trimSubstringLeft(StringUtil.trim(_originalLine), INITIAL_AT_PREFIX).split("()");
-            _codeInfo = functionAndDebugInfo[0];
+            _codeInfo = StringUtils.trimSubstringLeft(StringUtil.trim(_originalLine), INITIAL_AT_PREFIX).split("()")[0];
         }
 
         return _codeInfo;
